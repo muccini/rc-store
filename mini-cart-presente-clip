@@ -303,7 +303,7 @@
 
           <!-- Verifica itens no carrinho -->
           {%- for line_item in cart.items -%}
-            {%- if line_item.product.title contains 'Clip' -%}
+            {%- if line_item.product.title contains 'Óculos' and line_item.product.title contains 'Clip' -%}
               {%- assign num_glasses = num_glasses | plus: line_item.quantity -%}
             {%- endif -%}
 
