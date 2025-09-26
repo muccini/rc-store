@@ -1,0 +1,1458 @@
+<script>
+    
+  const urlCSV = "{{ settings.url_planilha_cupom }}";
+  let cupons = [];
+  let cuponsAplicados = [];
+
+  async function carregarCupons() {
+    try {
+      const response = await fetch(urlCSV);
+      if (!response.ok) throw new Error('Erro ao carregar cupons');
+      const texto = await response.text();
+      const linhas = texto.trim().split('\n');
+      const cabecalho = linhas[0].split(',');
+
+      cupons = linhas.slice(1).map(linha => {
+        const valores = linha.split(',');
+        let obj = {};
+        cabecalho.forEach((col, i) => {
+          obj[col.trim().toLowerCase()] = valores[i].trim();
+        });
+        return obj;
+      });
+    } catch (erro) {
+      console.error('Erro ao carregar cupons:', erro);
+    }
+  }
+
+  function carregarCuponsDoCheckout() {
+    document.querySelectorAll('.desconto-checkout').forEach(div => {
+      const codigo = div.getAttribute('data-cupom');
+      if (codigo) {
+        cuponsAplicados.push({ codigo: codigo, desconto: 0, tipo: 'fixo' });   
+      }
+    });
+  }
+
+  function atualizarLinkFinalizar() {
+    const btnFinalizar = document.getElementById('btn-finalizar');
+    if (!btnFinalizar) return;
+
+    if (cuponsAplicados.length === 0) {
+      btnFinalizar.href = '/cart';
+      return;
+    }
+
+    const ultimoCupom = cuponsAplicados[cuponsAplicados.length - 1].codigo;
+    btnFinalizar.href = `/discount/${encodeURIComponent(ultimoCupom)}?redirect=/cart`;
+  }
+
+  async function aplicarCupom() {
+    const codigo = document.getElementById('cumpom-input').value.trim();
+    const resultado = document.getElementById('resultado-cupom');
+
+    if (!codigo) {
+      resultado.textContent = 'Digite um código de cupom.';
+      return;
+    }
+
+    if (cuponsAplicados.some(c => c.codigo.toUpperCase() === codigo.toUpperCase())) {
+      resultado.textContent = 'Este cupom já está aplicado.';
+      return;
+    }
+
+    const cupom = cupons.find(c => c.codigo.toUpperCase() === codigo.toUpperCase());
+
+    if (!cupom) {
+      resultado.textContent = 'Cupom inválido.';
+      return;
+    }
+
+    const tipo = (cupom.tipo || '').toLowerCase(); 
+    let valorDesconto = parseFloat(cupom.desconto.replace(',', '.'));
+
+    const subtotalTexto = document.getElementById('subtotal').innerText.replace(/[^\d,]/g, '').replace('.', '').replace(',', '.');
+    const subtotal = parseFloat(subtotalTexto);
+
+    if (tipo === 'porcentagem') {
+      valorDesconto = (subtotal * valorDesconto) / 100;
+    }
+
+    const novoDescontoDiv = document.createElement('div');
+    novoDescontoDiv.classList.add('content-info');
+    novoDescontoDiv.innerHTML = `
+      <h1>Desconto aplicado (${codigo})</h1>
+      <p>- R$ ${valorDesconto.toFixed(2).replace('.', ',')}</p>
+    `;
+    const totalDiv = document.getElementById('total').parentElement;
+    totalDiv.parentNode.insertBefore(novoDescontoDiv, totalDiv);
+
+    cuponsAplicados.push({ codigo: codigo, desconto: valorDesconto, tipo: tipo });
+
+   
+    const totalAtualTexto = document.getElementById('total').innerText.replace(/[^\d,]/g, '').replace('.', '').replace(',', '.');
+    let totalAtual = parseFloat(totalAtualTexto);
+    totalAtual = Math.max(0, totalAtual - valorDesconto);
+    document.getElementById('total').innerText = `R$ ${totalAtual.toFixed(2).replace('.', ',')}`;
+
+    resultado.textContent = `Cupom aplicado: ${codigo}`;
+    atualizarLinkFinalizar();
+  }
+
+  carregarCupons();
+  carregarCuponsDoCheckout();
+      </script>
+      <script>
+        const cuponsShopifyAtivos = [
+          {% for discount_application in cart.cart_level_discount_applications %}
+            "{{ discount_application.title | escape }}"{% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        ];
+      </script>
+
+      <style>
+              .title-recon-car{
+                  font-family: Arial, Helvetica, sans-serif;
+                  font-size: 16px;
+                  margin:0;
+                  margin-top:30px;
+                  padding-left:10px;
+                 font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+              }  
+.Container-main-row {
+  background-color: #fff;  
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  padding: 10px 3px;
+  overflow-x: auto;
+  width: 100%;
+  font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+
+ 
+}
+.Container-main-row::-webkit-scrollbar
+ {
+  width: 0px;
+  height: 0px;
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+} 
+
+
+.Container-main-row::-webkit-scrollbar {
+  height: 5px; /* altura da barra (horizontal) */
+}
+
+.Container-main-row::-webkit-scrollbar-track {
+  background: #f1f1f1; /* fundo */
+  border-radius: 10px;
+}
+
+.Container-main-row::-webkit-scrollbar-thumb {
+  background: #888; /* cor do scroll */
+  border-radius: 10px;
+}
+
+.Container-main-row::-webkit-scrollbar-thumb:hover {
+  background: #555; /* cor ao passar mouse */
+}
+
+
+
+              .content-item{
+                  flex-shrink: 0;
+                  width: 180px;
+                  height:275px;
+                  background-color: #fff;
+                  border-radius: 10px;
+                  padding: 10px;
+                  box-shadow: 1px 1px 3px rgba(170, 170, 170, 0.849);
+                  position:relative;
+              }
+              .container-img{
+                  width:100%;
+               }
+              .container-img img{
+                  width: 100%;
+                  height:150px;
+                  border-radius: 5px 5px 0 0;
+              }
+              .container-infoTwo{
+                  padding: 5px 0;
+                  display: flex;
+                  justify-content: center;
+                  align-items: start;
+                  flex-direction: column;
+                  gap:8px;
+              }
+              .container-infoTwo h1, p{
+                  margin: 0;
+                  line-height:1;
+                   font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+              }
+              .container-infoTwo h1{
+                  font-size: 16px;
+                 font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+              }
+              .container-infoTwo p{
+                  color: rgb(83, 83, 83);
+         font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+              }
+              .btn-recon-car{
+                  width: 90%;
+                  border: none;
+                  outline: none;
+                  background-color: black;
+                  padding: 3px;
+                  border-radius: 4px;
+                  color: #fff;
+                  text-align:center;
+                  position:absolute;
+                  bottom:5%;
+              }
+
+
+
+            .container-main-info{
+                  width: 100%;
+                  background-color: #fff;
+                  margin-top:30px;
+                   font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+              }
+              .label-cupom{
+                  font-weight: 500;
+                 font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+              }
+              .container-input h1{
+                  font-family: Arial, Helvetica, sans-serif;
+                  font-size: 14px;
+                  margin:0;
+                 font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+              }
+              .container-input .input-button-container{
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  width: 100%;
+              }
+              .container-input .input-button-container input{
+                  border: 1px solid rgb(170, 170, 170);
+                  border-right: none;
+                  border-bottom-left-radius: 4px;
+                  border-top-left-radius: 4px;
+                  outline: none;
+                  width: 85%;
+                  padding: 4px 5px;
+                 font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+              }
+              .container-input .input-button-container button{
+                  border: none;
+                  border-bottom-right-radius: 4px;
+                  border-top-right-radius: 4px;
+                  background-color: black;
+                  padding:5px;
+                  color: #fff;
+                 font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+              }
+              .container-info-end{
+                  margin: 20px 0;
+                  padding: 15px;
+                  border-radius: 14px;
+                  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.301);
+              }
+              .container-info-end .content-info{
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  width: 100%;
+              }
+              .container-info-end h1, p{
+                 font-weight: 500;
+              font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+              }
+              .container-info-end p{
+                 font-size:14px;
+                  font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+              }
+             .presente-rc{
+                 font-size:12px;
+                 color: #174e22;
+                 margin:0;
+                font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+             }
+         .title_resumo{
+          font-size:20px !important;
+          color:#000;
+          font-weight:900;
+          font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+        }
+      </style>
+
+      {%- comment -%}
+        ------------------------------------ Fim Componentes---------------------------------------------
+      {%- endcomment -%}
+
+      {%- if section.settings.show_recommendations -%}
+        <cart-drawer-recommendations
+          section-id="{{ section.id }}"
+          product-id="{{ cart.items.first.product_id }}"
+          class="mini-cart__recommendations"
+        >
+          {%- assign acceptable_recommendations_count = 0 -%}
+
+          {%- for product in recommendations.products -%}
+            {%- assign matching_product = cart.items | where: 'product_id', product.id | first -%}
+
+            {%- if matching_product == blank -%}
+              {%- assign acceptable_recommendations_count = acceptable_recommendations_count | plus: 1 -%}
+            {%- endif -%}
+          {%- endfor -%}
+
+          {%- if recommendations.performed -%}
+            {%- if acceptable_recommendations_count > 0 -%}
+              <div class="mini-cart__recommendations-inner">
+                {%- if section.settings.recommendations_title != blank -%}
+                  <p class="mini-cart__recommendations-heading heading heading--small hidden-pocket">
+                    {{ section.settings.recommendations_title | escape }}
+                  </p>
+                  <p class="mini-cart__recommendations-heading heading heading--xsmall text--subdued hidden-lap-and-up">
+                    {{ section.settings.recommendations_title | escape }}
+                  </p>
+                {%- endif -%}
+
+                <div class="scroller">
+                  <div class="scroller__inner">
+                    <div class="mini-cart__recommendations-list">
+                      {%- assign shown_products_count = 0 -%}
+
+                      {%- for product in recommendations.products -%}
+                        {%- if shown_products_count >= 6 -%}
+                          {%- break -%}
+                        {%- endif -%}
+
+                        {%- assign matching_product = cart.items | where: 'product_id', product.id -%}
+
+                        {%- if matching_product.size == 0 -%}
+                          {%- assign shown_products_count = shown_products_count | plus: 1 -%}
+                          {%- render 'product-item-recommendation',
+                            product: product,
+                            reduced_content: true,
+                            reduced_font_size: true,
+                            hide_secondary_image: true,
+                            sizes_attribute: '(max-width: 740px) 65px, 92px'
+                          -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {%- endif -%}
+          {%- else -%}
+            <div class="mini-cart__recommendations-inner">
+              <div class="spinner">
+                {%- render 'icon' with 'spinner', stroke_width: 3, width: 40, height: 40 -%}
+              </div>
+            </div>
+          {%- endif -%}
+        </cart-drawer-recommendations>
+      {%- endif -%}
+    </div>
+
+    <style>
+      .rc-upsell-bar {
+        text-align: center;
+        padding: 10px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #000000; /* texto preto */
+        background-color: #f5f5f5; /* fundo cinza claro */
+        border-radius: 10px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      .rc-upsell-text {
+        margin-bottom: 5px;
+      }
+
+      .rc-upsell-progress {
+        width: 100%;
+        height: 7px;
+        background-color: #d0d0d0; /* cinza claro */
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 7px;
+      }
+
+      .rc-upsell-fill {
+        height: 100%;
+        background-color: #a0a0a0; /* cinza médio */
+        transition: width 0.4s ease;
+      }
+
+      .mini-cart__cashback-section {
+        padding: var(--atlas-space-small) 0;
+        text-align: center;
+      }
+
+      .mini-cart__cashback-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--atlas-space-mini);
+        flex-wrap: nowrap;
+      }
+
+      .mini-cart__cashback-text {
+        margin: 0;
+        color: var(--atlas-text-secondary);
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: var(--atlas-font-size-small);
+      }
+
+      @media (max-width: 480px) {
+        .mini-cart__cashback-text {
+          font-size: var(--atlas-font-size-tiny);
+        }
+      }
+
+      .divider {
+        border: 0;
+        border-top: 1px solid var(--atlas-border-light);
+        margin: var(--atlas-space-small) 0;
+      }
+
+      .cashback-amount {
+        color: #000000; /* texto preto */
+        font-weight: bold;
+      }
+
+      .mini-cart__cashback-text svg {
+        width: 16px; /* Aumenta o tamanho do ícone */
+        height: 16px; /* Aumenta o tamanho do ícone */
+        margin-right: var(--atlas-space-mini);
+      }
+    </style>
+
+    <footer class="mini-cart__drawer-footer drawer__footer drawer__footer--tight drawer__footer--bordered">
+      {%- capture shipping_tax_note -%}{{ 'cart.general.shipping_tax_note' | t }}{%- endcapture -%}
+
+      {%- if cart.cart_level_discount_applications != blank -%}
+        <ul class="mini-cart__discount-list list--unstyled" role="list">
+          {%- for discount_application in cart.cart_level_discount_applications -%}
+            <li class="mini-cart__discount">
+              <span class="mini-cart__discount-badge discount-badge">
+                {%- render 'icon' with 'discount-badge' -%}
+                {{ discount_application.title -}}
+              </span>
+              <span class="mini-cart__discount-price text--xsmall text--subdued"
+                >-{{ discount_application.total_allocated_amount | money -}}
+              </span>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      {%- if section.settings.show_order_note or shipping_tax_note != '' -%}
+        <div class="mini-cart__actions text--subdued text--xsmall">
+          {%- if section.settings.show_order_note -%}
+            <button
+              type="button"
+              is="toggle-button"
+              id="order-note-toggle"
+              class="link"
+              data-action="toggle-order-note"
+              aria-controls="mini-cart-note"
+              aria-expanded="false"
+            >
+              {%- if cart.note == blank -%}
+                {{- 'cart.general.add_order_note' | t -}}
+              {%- else -%}
+                {{- 'cart.general.edit_order_note' | t -}}
+              {%- endif -%}
+            </button>
+          {%- endif -%}
+
+          {%- if shipping_tax_note != '' -%}
+            <span>{{ shipping_tax_note }}</span>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+
+     {%- assign go_direct_to_checkout = false -%}
+
+{%- for item in cart.items -%}
+  {%- if item.product.handle == 'oculos-barcelona' -%}
+    {%- assign go_direct_to_checkout = true -%}
+    {%- break -%}
+  {%- endif -%}
+{%- endfor -%}
+
+  {%- if section.settings.show_checkout_button -%}
+        <a id="btn-finalizar" href="/cart" class="button button--primary button--full" data-no-instant=""
+          >PRÓXIMA ETAPA • {{ cart.total_price | money -}}
+        </a>
+      {%- else -%}
+        <a id="btn-finalizar" href="{{ routes.cart_url }}" class="button button--primary button--full" data-no-instant>
+          {{- 'cart.general.go_to_cart' | t -}}
+        </a>
+      {%- endif -%}
+
+    </footer>
+  {%- endif -%}
+
+  {%- if section.settings.show_order_note -%}
+    <openable-element id="mini-cart-note" class="mini-cart__order-note">
+      <span class="openable__overlay"></span>
+      <label for="cart[note]" class="mini-cart__order-note-title heading heading--xsmall">
+        {{- 'cart.general.add_order_note' | t -}}
+      </label>
+      <textarea
+        is="cart-note"
+        name="note"
+        id="cart[note]"
+        rows="3"
+        aria-owns="order-note-toggle"
+        class="input__field input__field--textarea"
+        placeholder="{{ 'cart.general.order_note_placeholder' | t }}"
+      >{{ cart.note }}</textarea>
+      <button type="button" data-action="close" class="form__submit form__submit--closer button button--secondary">
+        {{ 'cart.general.order_note_save' | t }}
+      </button>
+    </openable-element>
+  {%- endif -%}
+</cart-drawer>
+
+<style>
+.cart-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-family: Arial, sans-serif;
+  padding-top: 20px;
+}
+
+.cart-img {
+  width: 90px;
+  height: auto;
+}
+
+.cart-info {
+  flex-grow: 1;
+ 
+}
+
+.cart-info h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.cart-info .price {
+  margin: 2px 0 8px;
+  font-size: 10px;
+  color: #333;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.quantity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quantity span {
+  font-size: 11px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+
+
+.quantity input {
+  width: 95px;
+  text-align: center;
+  border: 1px solid #ccc;
+  height: 28px;
+  border-radius: 9px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+</style>
+
+{%- comment -%}
+  Script de remoção automática específico para produtos únicos
+{%- endcomment -%}
+{% if cart.item_count == 1 %}
+  {% assign first_item = cart.items.first %}
+  {% if first_item.product.title == "Case de Couro" %}
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        let updates = {
+          // Substitua pelo ID correto do produto case-couro-brinde
+          // 10203738800406: 0
+        };
+
+        fetch(window.Shopify.routes.root + 'cart/update.js', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ updates })
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log("Itens removidos:", data);
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+      });
+    </script>
+  {% endif %}
+{% endif %}
+
+{% schema %}
+{
+  "name": "Cart drawer",
+  "class": "shopify-section--mini-cart",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable_free_gift",
+      "label": "Ativar presente grátis",
+      "default": false
+    },
+    {
+      "type": "product",
+      "id": "produto_free_gift",
+      "label": "Produto"
+    },
+    {
+      "type": "range",
+      "id": "valor_minimo_free_gift",
+      "label": "Valor mínimo em Compras",
+      "min": 100,
+      "max": 1000,
+      "step": 10,
+      "default": 400
+    },
+    {
+      "type": "paragraph",
+      "content": "Free shipping notice can be configured in global cart settings."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_order_note",
+      "label": "Show order note",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_checkout_button",
+      "label": "Show checkout button",
+      "default": true
+    },
+    {
+      "type": "url",
+      "id": "empty_button_link",
+      "label": "Empty button link",
+      "default": "/collections/all"
+    },
+    {
+      "type": "header",
+      "content": "Cross-sell",
+      "info": "Dynamic recommendations are based on the items in your cart. They change and improve with time. [Learn more](https://help.shopify.com/en/themes/development/recommended-products)"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_recommendations",
+      "label": "Show cart recommendations",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "recommendations_title",
+      "label": "Recommendations heading",
+      "default": "You may also like"
+    }
+  ]
+}
+{% endschema %}<cart-drawer
+  style="position: fixed; top: 0; right: 0; z-index: 9999; width: 90%;"
+  section="{{ section.id }}"
+  id="mini-cart"
+  class="mini-cart drawer drawer--large"
+>
+  <span class="drawer__overlay"></span>
+
+  <header class="drawer__header">
+    <p class="drawer__title heading h6">
+      {%- case settings.cart_icon -%}
+        {%- when 'shopping_bag' -%}
+          {%- render 'icon' with 'header-cart' -%}
+
+        {%- when 'shopping_cart' -%}
+          {%- render 'icon' with 'header-shopping-cart' -%}
+
+        {%- when 'tote_bag' -%}
+          {%- render 'icon' with 'header-tote-bag' -%}
+      {%- endcase -%}
+
+      {%- if cart.item_count == 0 -%}
+        {{- 'cart.general.title' | t -}}
+      {%- else -%}
+        {{- 'cart.general.item_count' | t: count: cart.item_count -}}
+      {%- endif -%}
+    </p>
+
+    <button
+      type="button"
+      class="drawer__close-button tap-area"
+      data-action="close"
+      title="{{ 'general.accessibility.close' | t | escape }}"
+    >
+      {%- render 'icon' with 'close' -%}
+    </button>
+  </header>
+
+  {%- if cart.item_count == 0 -%}
+    <div class="drawer__content drawer__content--center">
+      <p>{{ 'cart.general.empty' | t }}</p>
+
+      <div class="button-wrapper">
+        <a href="{{ section.settings.empty_button_link }}" class="button button--primary">
+          {{- 'cart.general.start_shopping' | t -}}
+        </a>
+      </div>
+    </div>
+  {%- else -%}
+    <div class="drawer__content">
+      {%- if cart.item_count != 0 -%}
+        <div style="text-align:center; padding: 12px 3px;">
+          <span
+            ><img
+              style="width:22px; height:22px;"
+              src="https://cdn.shopify.com/s/files/1/0849/2253/2118/files/diff-icon-free-shipping_1.svg?v=1750097545"
+            >
+            Você ganhou frete grátis nesta compra.</span
+          >
+        </div>
+        {%- comment -%}
+          LÓGICA PRINCIPAL: Contagem de óculos (excluindo presentes, Clip-On e Boxes)
+          Esta contagem é usada para a oferta "Compre 1 Leve 2"
+        {%- endcomment -%}
+        {% assign num_glasses = 0 %}
+        {% assign tem_clip_on = false %}
+
+        {% for item in cart.items %}
+          {% if item.product.title contains 'Óculos' %}
+            {% unless item.product.tags contains 'gift' or item.product.tags contains 'Box' or item.product.title contains 'Clip-On' %}
+              {% assign num_glasses = num_glasses | plus: item.quantity %}
+            {% endunless %}
+          {% endif %}
+
+          {% if item.product.title contains 'Clip-On' %}
+            {% assign tem_clip_on = true %}
+          {% endif %}
+        {% endfor %}
+
+        {%- comment -%}
+          BARRAS DE PROGRESSO: Sistema de ofertas baseado na contagem
+        {%- endcomment -%}
+        {% if tem_clip_on %}
+          <div class="rc-upsell-bar">
+            <div class="rc-upsell-text">Você ganhou frete grátis no seu carrinho! 🖤</div>
+            <div class="rc-upsell-progress">
+              <div class="rc-upsell-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+        {% elsif num_glasses >= 2 %}
+          <div class="rc-upsell-bar">
+            <div class="rc-upsell-text">Oferta ativada: 1 óculos <strong>100% grátis</strong> no seu carrinho! 🖤</div>
+            <div class="rc-upsell-progress">
+              <div class="rc-upsell-fill" style="width: 100%;"></div>
+            </div>
+            <span style="margin-top:8px;">2 de 2 óculos adicionados</span>
+          </div>
+        {% elsif num_glasses == 1 %}
+          <div class="rc-upsell-bar" data-location="top">
+            <div class="rc-upsell-text">COMPRE 1 LEVE 2: ADICIONE MAIS 1 ÓCULOS</div>
+            <div class="rc-upsell-progress">
+              <div class="rc-upsell-fill" style="width: 66%;"></div>
+            </div>
+            <span style="margin-top:8px;">1 de 2 óculos adicionado</span>
+          </div>
+        {% endif %}
+
+      {%- endif -%}
+
+      <!-- Definição das regras para presente grátis -->
+      {%- assign free_shipping_threshold = 1 -%}
+      {%- assign gift_threshold = 3 -%}
+      {%- assign has_gift = false -%}
+      {%- assign has_free_shipping = false -%}
+
+      {%- if progress_percentage > 100 -%}
+        {%- assign progress_percentage = 100 -%}
+      {%- endif -%}
+
+      {%- assign gift_threshold = 1 -%}
+      {%- assign cart_total = cart.total_price | default: 0 -%}
+      {%- assign progress_percentage = cart_total | divided_by: gift_threshold | times: 100 -%}
+      {%- assign gift_items_to_remove = '' -%}
+
+      {%- if progress_percentage < 90 -%}
+        {%- assign progress_percentage = 90 -%}
+      {%- endif -%}
+
+      {%- if progress_percentage > 100 -%}
+        {%- assign progress_percentage = 100 -%}
+      {%- endif -%}
+      
+      {%- if section.settings.enable_free_gift -%}
+        {%- assign has_gift = false -%}
+        {%- for line_item in cart.items -%}
+          {%- if line_item.product.tags contains 'gift' -%}
+            {%- if cart_total < gift_threshold -%}
+              <script>
+                 document.addEventListener("DOMContentLoaded", function() {
+                  const giftThreshold = 17000; // Valor mínimo em centavos para manter o presente
+                  let attemptCount = 0; // Contador de tentativas
+                  const maxAttempts = 10; // Número máximo de tentativas
+                  const intervalTime = 500; // Intervalo entre tentativas em milissegundos (500 ms = 0,5 segundo)
+
+                  // Função para verificar o carrinho e remover o presente, se necessário
+                  function attemptToRemoveGift() {
+                    fetch("/cart.js")
+                      .then(response => response.json())
+                      .then(cart => {
+                        const cartTotal = cart.total_price;
+
+                        // Verifica se o total do carrinho está abaixo do limite e se o link de remoção está presente
+                        const removeGiftLink = document.getElementById("remove-gift-link");
+
+                        if (cartTotal < giftThreshold && removeGiftLink) {
+                          removeGiftLink.click(); // Clica automaticamente no link de remoção do presente
+                        }
+
+                        // Incrementa o contador de tentativas
+                        attemptCount++;
+
+                        // Para o intervalo se o item de presente foi removido ou se atingiu o número máximo de tentativas
+                        if (attemptCount >= maxAttempts || !document.getElementById("remove-gift-link")) {
+                          clearInterval(removalInterval); // Para o intervalo
+                        }
+                      });
+                  }
+
+                  // Configura o intervalo para executar a função a cada 500 ms
+                  const removalInterval = setInterval(attemptToRemoveGift, intervalTime);
+                });
+              </script>
+
+            {%- else -%}
+              {%- assign has_gift = true -%}
+            {%- endif -%}
+          {%- endif -%}
+        {%- endfor -%}
+
+        <!-- Mostrar o widget promocional apenas se não houver um presente no carrinho -->
+        {%- if section.settings.enable_free_gift and has_gift == false -%}
+          <!-- Definição das regras para widget promocional -->
+          {%- assign free_shipping_threshold = 1 -%}
+          {%- assign gift_threshold_widget = 1 -%}
+          {%- assign num_clip_products = 0 -%}
+          {%- assign has_gift_widget = false -%}
+          {%- assign has_free_shipping = false -%}
+
+          <!-- Verifica itens no carrinho APENAS para o widget promocional -->
+          {%- for line_item in cart.items -%}
+            {%- if line_item.product.title contains 'Clip' -%}
+              {%- assign num_clip_products = num_clip_products | plus: line_item.quantity -%}
+            {%- endif -%}
+
+            {%- if line_item.product.id == section.settings.produto_free_gift.id -%}
+              {%- assign has_gift_widget = true -%}
+            {%- endif -%}
+
+            {%- if line_item.product.title == 'Frete Grátis' -%}
+              {%- assign has_free_shipping = true -%}
+            {%- endif -%}
+          {%- endfor -%}
+
+          {%- assign remaining_clips = gift_threshold_widget | minus: num_clip_products -%}
+          {%- assign progress_percentage_widget = num_clip_products | times: 100 | divided_by: gift_threshold_widget -%}
+
+          {%- if progress_percentage_widget > 100 -%}
+            {%- assign progress_percentage_widget = 100 -%}
+          {%- endif -%}
+
+          <div class="icart-progress-bar-widget">
+            <div class="icart-pg-progress-container">
+              <!-- Incentivo para adicionar mais produtos Clip -->
+              {%- if num_clip_products < 0 -%}
+                <p class="icart-message" style="text-align:center;">
+                  <strong>🎉 Aproveite, você ganhou Frete Grátis!</strong> <br>
+                </p>
+                <p class="icart-message">Adicione mais um óculos por <strong>apenas R$ 70</strong>.</p>
+              {%- else -%}
+                <p class="icart-message congrats" style="text-align:center;">Parabéns! Você ganhou um presente 🎁</p>
+              {%- endif -%}
+
+              <div class="icart-progressbar-layout">
+                <div class="icart-range-active" style="width: {{ progress_percentage_widget }}%;"></div>
+              </div>
+
+              {%- if num_clip_products >= gift_threshold_widget and has_gift_widget == false -%}
+                <div class="icart-product-details">
+                  <div class="icart-product-image">
+                    <a
+                      href="https://www.userosacoral.com/"
+                      class="icart-product-image"
+                    >
+                      <img
+                        src="{{ section.settings.produto_free_gift.featured_image | img_url: '100x100' }}"
+                        alt="{{ section.settings.produto_free_gift.title }}"
+                      >
+                    </a>
+                  </div>
+                  <div class="icart-product-info">
+                    <p class="icart-product-title">{{ section.settings.produto_free_gift.title }}</p>
+                    <p class="icart-product-threshold">Resgate agora para adicionar ao seu carrinho!</p>
+                    {%- render 'product-item-especial',
+                      product: section.settings.produto_free_gift,
+                      reduced_content: true,
+                      reduced_font_size: true,
+                      hide_secondary_image: true,
+                      sizes_attribute: '(max-width: 740px) 65px, 92px'
+                    -%}
+                  </div>
+                </div>
+
+              {% elsif num_clip_products < 2 %}
+                <div class="icart-product-details" style="display:none;">
+                  <div class="icart-product-image">
+                    <a
+                      href="https://www.userosacoral.com/products/pulseira-luxy-em-prata-925-com-zirconias-brilhantes"
+                      class="icart-product-image"
+                    >
+                      <img
+                        src="{{ section.settings.produto_free_gift.featured_image | img_url: '100x100' }}"
+                        alt="{{ section.settings.produto_free_gift.title }}"
+                      >
+                    </a>
+                  </div>
+                  <div class="icart-product-info">
+                    <p class="icart-product-title">{{ section.settings.produto_free_gift.title }}</p>
+                    <p class="icart-product-threshold">Um toque de elegância para complementar seu estilo.</p>
+                  </div>
+                </div>
+
+              {%- else -%}
+                <div class="icart-product-details">
+                  <div class="icart-product-image">
+                    <a
+                      href="https://www.userosacoral.com/products/pulseira-luxy-em-prata-925-com-zirconias-brilhantes"
+                      class="icart-product-image"
+                    >
+                      <img
+                        src="{{ section.settings.produto_free_gift.featured_image | img_url: '100x100' }}"
+                        alt="{{ section.settings.produto_free_gift.title }}"
+                      >
+                    </a>
+                  </div>
+                  <div class="icart-product-info">
+                    <p class="icart-product-title">{{ section.settings.produto_free_gift.title }}</p>
+                    <p class="icart-product-threshold">Um toque de elegância para complementar seu estilo.</p>
+                  </div>
+                </div>
+              {%- endif -%}
+            </div>
+          </div>
+
+        {%- else -%}
+          <!-- Mostrar mensagem e detalhes do brinde já resgatado -->
+        {%- endif -%}
+      {%- endif -%}
+
+      <style>
+        .titulo-frete {
+            color: #333; /* Texto escuro para contraste suave */
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 12px;
+            margin: 15px 0;
+        }
+
+        .titulo-frete .icart-message {
+            font-size: 14px;
+            font-weight: 500;
+            margin: 4px 0;
+        }
+
+        .titulo-frete .icart-message.congrats {
+            font-size: 11px;
+            font-weight: 500;
+            color: #1AA915; /* Verde escuro para sofisticação */
+            text-transform: uppercase;
+        }
+
+
+            .icart-progress-bar-widget {
+                background-color: #2B2B2B;
+                border-radius: 8px;
+                max-width: 360px; /* 20% menor */
+                margin: 20px auto;
+                padding: 16px; /* 20% menor */
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            }
+
+            .icart-pg-message-container {
+                text-align: center;
+                margin-bottom: 12px; /* 20% menor */
+            }
+
+            .icart-message {
+                font-size: 11px; /* 20% menor */
+                color: #FFF;
+                font-weight: 500;
+            }
+
+            .icart-message.congrats {
+                color: #FFF;
+                font-size: 12px; /* 20% menor */
+            }
+
+            .icart-product-details {
+                display: flex;
+                align-items: center;
+                margin: 12px 0; /* 20% menor */
+                background-color: #282828;
+                padding: 8px; /* 20% menor */
+                border-radius: 6px;
+            }
+
+            .icart-product-image img {
+                border-radius: 8px;
+                width: 60px; /* 20% menor */
+                height: 60px; /* 20% menor */
+                object-fit: cover;
+            }
+
+            .icart-product-info {
+                margin-left: 12px; /* 20% menor */
+                width: 200px;
+            }
+
+            .icart-product-title {
+                margin: 0;
+                color: #FFF;
+                font-size: 13px; /* 20% menor */
+                font-weight: bold;
+            }
+
+            .icart-product-threshold {
+                margin: 4px 0 0; /* 20% menor */
+                color: #CCC;
+                font-size: 10.5px; /* 20% menor */
+            }
+
+            .icart-progressbar-layout {
+                margin: 12px 0; /* 20% menor */
+                background-color: #4D4D4D;
+                height: 10px; /* 20% menor */
+                border-radius: 5px;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .icart-range-active {
+                 background: linear-gradient(45deg, #AAAAAA 25%, #888888 25%, #888888 50%, #AAAAAA 50%, #AAAAAA 75%, #888888 75%);
+                background-size: 30px 30px;
+                height: 100%;
+                width: 100%;
+                transition: width 0.5s ease;
+                animation: slideStripes 3s linear infinite;
+            }
+
+            @keyframes slideStripes {
+                0% {
+                    background-position: 0 0;
+                }
+                100% {
+                    background-position: 30px 0;
+                }
+            }
+
+            .icart-special-offer-message {
+                text-align: center;
+                font-size: 11px; /* 20% menor */
+                color: #FFF;
+                margin-top: 8px; /* 20% menor */
+            }
+      </style>
+
+      <form id="mini-cart-form" action="{{ routes.cart_url }}" novalidate method="post">
+        <input type="hidden" name="checkout">
+
+        {%- for line_item in cart.items -%}
+          {%- if line_item.product.tags contains 'gift' and cart_total < gift_threshold -%}
+            <script>
+                 document.addEventListener("DOMContentLoaded", function() {
+                const giftThreshold = 19700; // Valor mínimo em centavos para manter o presente
+
+                // Função para verificar o carrinho e remover o presente, se necessário
+                function attemptToRemoveGift() {
+                  fetch("/cart.js")
+                    .then(response => response.json())
+                    .then(cart => {
+                      const cartTotal = cart.total_price;
+
+                      // Verifica se o total do carrinho está abaixo do limite e se o link de remoção está presente
+                      const removeGiftLink = document.getElementById("remove-gift-link");
+
+                      if (cartTotal < giftThreshold && removeGiftLink) {
+                        removeGiftLink.click(); // Clica automaticamente no link de remoção do presente
+                      }
+                    });
+                }
+
+                // Configura o MutationObserver para monitorar o cart drawer
+                const cartDrawer = document.getElementById("mini-cart"); // Elemento do cart drawer
+                if (cartDrawer) {
+                  const observer = new MutationObserver((mutationsList) => {
+                    // Para cada mudança detectada, tente remover o presente
+                    for (let mutation of mutationsList) {
+                      if (mutation.type === "childList" || mutation.type === "attributes") {
+                        attemptToRemoveGift(); // Executa a verificação e remoção sempre que houver mudanças no cart drawer
+                      }
+                    }
+                  });
+
+                  // Configura o observer para observar mudanças no cart drawer
+                  observer.observe(cartDrawer, { attributes: true, childList: true, subtree: true });
+                }
+              });
+            </script>
+          {%- endif -%}
+
+          <line-item class="line-item">
+            <div class="line-item__content-wrapper">
+        {% if line_item.product.handle != "case-couro-brinde" %}
+              <a href="{{ line_item.url }}" class="line-item__image-wrapper" tabindex="-1" aria-hidden="true">
+                <span class="line-item__loader" hidden>
+                  <span class="line-item__loader-spinner spinner" hidden>
+                    {%- render 'icon' with 'spinner', width: 16, height: 16, stroke_width: 6 -%}
+                  </span>
+                  <span class="line-item__loader-mark" hidden>
+                    {%- render 'icon' with 'check', width: 20, height: 20 -%}
+                  </span>
+                </span>
+
+                <img
+                  class="line-item__image"
+                  loading="sizes"
+                  sizes="(max-width: 740px) 80px, 92px"
+                  {% render 'image-attributes', image: line_item.image, sizes: '80,92,160,184,240,276' %}
+                >
+              </a>
+            {% else %}
+               <a  class="line-item__image-wrapper" tabindex="-1" aria-hidden="true">
+                <span class="line-item__loader" hidden>
+                  <span class="line-item__loader-spinner spinner" hidden>
+                    {%- render 'icon' with 'spinner', width: 16, height: 16, stroke_width: 6 -%}
+                  </span>
+                  <span class="line-item__loader-mark" hidden>
+                    {%- render 'icon' with 'check', width: 20, height: 20 -%}
+                  </span>
+                </span>
+
+                <img
+                  class="line-item__image"
+                  loading="sizes"
+                  sizes="(max-width: 740px) 80px, 92px"
+                  {% render 'image-attributes', image: line_item.image, sizes: '80,92,160,184,240,276' %}
+                >
+              </a>
+            {% endif %}
+
+              {%- capture unit_price -%}
+                {%- if line_item.unit_price_measurement -%}
+                  <div class="price text--subdued">
+                    <div class="unit-price-measurement">
+                      <span class="unit-price-measurement__price">{{ line_item.unit_price | money }}</span>
+                      <span class="unit-price-measurement__separator">/</span>
+
+                      {%- if line_item.unit_price_measurement.reference_value != 1 -%}
+                        <span class="unit-price-measurement__reference-value">{{ line_item.unit_price_measurement.reference_value }}</span>
+                      {%- endif -%}
+
+                      <span class="unit-price-measurement__reference-unit">{{ line_item.unit_price_measurement.reference_unit }}</span>
+                    </div>
+                  </div>
+                {%- endif -%}
+              {%- endcapture -%}
+
+              {%- capture line_price -%}
+                {%- comment -%}
+                IMPLEMENTATION NOTE: The designer wanted to show the "compare at price" on cart. In case an automatic discount is applied
+                  to a line item though, the "real" discount takes precedence over the compare at price
+                {%- endcomment -%}
+
+                <span class="price {% if line_item.original_line_price > line_item.final_line_price or line_item.final_line_price == 0 or line_item.variant.compare_at_price > line_item.variant.price %}price--highlight{% endif %}">
+                  <span class="visually-hidden">{{ 'product.general.sale_price' | t }}</span>
+
+                  {%- if line_item.final_line_price == 0 -%}
+                  {%- else -%}
+                    {{- line_item.final_line_price | money -}}
+                  {%- endif -%}
+                </span>
+
+                {%- if line_item.original_line_price > line_item.final_line_price or line_item.variant.compare_at_price > line_item.variant.price -%}
+                  <span class="price price--compare">
+                    <span class="visually-hidden">{{ 'product.general.regular_price' | t }}</span>
+
+                    {%- if line_item.original_line_price > line_item.final_line_price -%}
+                      {{- line_item.original_line_price | money -}}
+                    {%- else -%}
+                      {{- line_item.variant.compare_at_price | times: line_item.quantity | money -}}
+                    {%- endif -%}
+                  </span>
+                {%- endif -%}
+              {%- endcapture -%}
+
+              <div class="line-item__info" style="width:100%;">
+                <div
+                  style="margin:0; display:flex; align-items:start; justify-content:center; flex-direction:column;"
+                  class="product-item-meta"
+                >
+                  {%- if settings.show_vendor -%}
+                    {%- assign vendor_handle = line_item.vendor | handle -%}
+                    {%- assign collection_for_vendor = collections[vendor_handle] -%}
+
+                    {%- unless collection_for_vendor.empty? -%}
+                      <a
+                        class="product-item-meta__vendor heading heading--xxsmall"
+                        href="{{ collection_for_vendor.url }}"
+                      >
+                        {{- line_item.vendor -}}
+                      </a>
+                    {%- else -%}
+                      <a
+                        class="product-item-meta__vendor heading heading--xxsmall"
+                        href="{{ line_item.vendor | url_for_vendor }}"
+                      >
+                        {{- line_item.vendor -}}
+                      </a>
+                    {%- endunless -%}
+                  {%- endif -%}
+     {% if line_item.product.handle != "case-couro-brinde" %}
+                  <a href="{{ line_item.url }}" style="margin:0;" class="product-item-meta__title text--small">
+                    {{- line_item.product.title -}}
+                  </a>
+                
+                      {% else %}
+                     <a  style="margin:0;" class="product-item-meta__title text--small">
+                    {{- line_item.product.title -}}
+                  </a>
+                      {% endif %}
+
+                  {%- capture line_item_properties -%}
+                    <div style="margin:0;" class="price-list price-list--stack">
+                  {{- line_price -}}
+                </div>
+
+                    {%- unless line_item.properties == blank -%}
+                      <ul class="product-item-meta__property list--unstyled text--subdued text--xsmall" role="list">
+                        {%- for property in line_item.properties -%}
+                          {%- assign first_character_in_key = property.first | truncate: 1, '' -%}
+
+                          {%- if property.last == blank or first_character_in_key == '_' -%}
+                            {%- continue -%}
+                          {%- endif -%}
+
+                          <li>{{ property.first }}: {{ property.last }}</li>
+                        {%- endfor -%}
+                      </ul>
+                    {%- endunless -%}
+                  {%- endcapture -%}
+
+                  {%- if line_item_properties != blank -%}
+                    <div style="margin:0px;" class="product-item-meta__property-list">
+                      {{- line_item_properties -}}
+                    </div>
+                  {%- endif -%}
+                  {%- if line_item.product.tags contains 'gift' -%}
+                  {% else %}
+                    <div class="product-item-meta__price-list-container text--small">
+                      {%- if unit_price != blank -%}
+                        <div class="price-list hidden-phone">
+                          {{- unit_price -}}
+                        </div>
+                      {%- endif -%}
+                    </div>
+                  {%- endif -%}
+                </div>
+
+                {%- if line_item.line_level_discount_allocations != blank -%}
+                  <ul
+                    style="margin-top:0px; margin-bottom:5px;"
+                    class="line-item__discount-list list--unstyled"
+                    role="list"
+                  >
+                    {%- for discount_allocation in line_item.line_level_discount_allocations -%}
+                      {%- for discount_allocation in line_item.line_level_discount_allocations -%}
+                        <li class="line-item__discount-badge discount-badge">
+                          {%- render 'icon' with 'discount-badge' -%}
+                          {{ discount_allocation.discount_application.title }}
+                        </li>
+                      {%- endfor -%}
+                    {%- endfor -%}
+                  </ul>
+                {%- endif -%}
+
+                {%- assign max_allowed_quantity = '' -%}
+                {%- assign allow_more = true -%}
+
+                {%- if line_item.variant.inventory_management == 'shopify'
+                  and line_item.variant.inventory_policy == 'deny'
+                  and line_item.variant.inventory_quantity <= line_item.quantity
+                -%}
+                  {%- assign max_allowed_quantity = line_item.variant.inventory_quantity -%}
+                  {%- assign allow_more = false -%}
+                {%- endif -%}
+
+                <line-item-quantity style="margin-top:0px; position:relative;" class="line-item__quantity">
+                  {%- if line_item.product.handle == 'case-couro-brinde' -%}
+                    <!-- Caso o produto tenha o handle 'case-couro-brinde', exibir apenas o botão de remover -->
+                    <a
+                      id="remove-gift-link"
+                      style="margin-left:0px; "
+                      href="{{ line_item.url_to_remove }}"
+                      class="line-item__remove-button link text--subdued text--xxsmall"
+                      data-no-instant
+                      >Remover Presente</a
+                    >
+                  {%- else -%}
+                    <!-- Exibir o seletor de quantidade padrão caso o produto não tenha o handle 'case-couro-brinde' -->
+                 
+                     {% if line_item.product.handle != "case-couro-brinde" %}
+                    <span>Qtd:</span>
+                    <div class="quantity-selector quantity-selector--small">
+                    
+                      <a
+                        href="{{ routes.cart_change_url }}?quantity={{ line_item.quantity | minus: 1 }}&line={{ forloop.index }}"
+                        class="quantity-selector__button"
+                        aria-label="{{ 'cart.general.decrease_quantity' | t | escape }}"
+                        data-no-instant
+                      >
+                        {%- render 'icon' with 'minus' -%}
+                      </a>
+
+                      <input
+                        is="input-number"
+                        class="quantity-selector__input text--xsmall"
+                        autocomplete="off"
+                        type="text"
+                        inputmode="numeric"
+                        name="updates[]"
+                        data-line="{{ forloop.index }}"
+                        value="{{ line_item.quantity }}"
+                        {% if max_allowed_quantity != '' %}
+                          max="{{ max_allowed_quantity }}"
+                        {% endif %}
+                        size="{{ line_item.quantity | append: '' | size | at_least: 2 }}"
+                        aria-label="{{ 'cart.general.change_quantity' | t | escape }}"
+                      >
+
+                      {%- if allow_more -%}
+                        <a
+                          href="{{ routes.cart_change_url }}?quantity={{ line_item.quantity | plus: 1 }}&line={{ forloop.index }}"
+                          class="quantity-selector__button"
+                          aria-label="{{ 'cart.general.increase_quantity' | t | escape }}"
+                          data-no-instant
+                        >
+                          {%- render 'icon' with 'plus' -%}
+                        </a>
+                      {%- else -%}
+                        <span
+                          class="quantity-selector__button"
+                          aria-label="{{ 'cart.general.no_more_stock' | t | escape }}"
+                          data-tooltip="{{ 'cart.general.no_more_stock' | t | escape }}"
+                        >
+                          {%- render 'icon' with 'plus' -%}
+                        </span>
+                      {%- endif -%}
+                    </div>
+                  {% else %}
+                     <span>Qtd:</span>
+                    <div class="quantity-selector quantity-selector--small">
+
+                      <input
+                        is="input-number"
+                        class="quantity-selector__input text--xsmall"
+                        autocomplete="off"
+                        type="text"
+                        inputmode="numeric"
+                        name="updates[]"
+                        data-line="{{ forloop.index }}"
+                        value="{{ line_item.quantity }}"
+                        {% if max_allowed_quantity != '' %}
+                          max="{{ max_allowed_quantity }}"
+                        {% endif %}
+                        size="{{ line_item.quantity | append: '' | size | at_least: 2 }}"
+                        aria-label="{{ 'cart.general.change_quantity' | t | escape }}"
+                        readonly
+                      >
+                    
+                    </div>
+                       {% endif %}
+
+
+                    <a
+                      href="{{ line_item.url_to_remove }}"
+                      data-no-instant
+                      style="position:absolute; left:95%;"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 32 32"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <defs>
+                          <style>.cls-1{fill:none;}</style>
+                        </defs>
+                        <title/>
+                        <g data-name="Layer 2" id="Layer_2">
+                          <path d="M20,29H12a5,5,0,0,1-5-5V12a1,1,0,0,1,2,0V24a3,3,0,0,0,3,3h8a3,3,0,0,0,3-3V12a1,1,0,0,1,2,0V24A5,5,0,0,1,20,29Z"/>
+                          <path d="M26,9H6A1,1,0,0,1,6,7H26a1,1,0,0,1,0,2Z"/>
+                          <path d="M20,9H12a1,1,0,0,1-1-1V6a3,3,0,0,1,3-3h4a3,3,0,0,1,3,3V8A1,1,0,0,1,20,9ZM13,7h6V6a1,1,0,0,0-1-1H14a1,1,0,0,0-1,1Z"/>
+                          <path d="M14,23a1,1,0,0,1-1-1V15a1,1,0,0,1,2,0v7A1,1,0,0,1,14,23Z"/>
+                          <path d="M18,23a1,1,0,0,1-1-1V15a1,1,0,0,1,2,0v7A1,1,0,0,1,18,23Z"/>
+                        </g>
+                        <g id="frame">
+                          <rect class="cls-1" height="2" width="2"/>
+                        </g>
+                      </svg>
+                    </a>
+                  {%- endif -%}
+                </line-item-quantity>
+                
+
+              </div>
+            </div>
+          </line-item>
+        {%- endfor -%}
+        {%- if gift_items_to_remove != '' -%}
+          <meta http-equiv="refresh" content="0;url=/cart?{{ gift_items_to_remove | remove_first: '&' }}">
+        {%- endif -%}
+      </form>
