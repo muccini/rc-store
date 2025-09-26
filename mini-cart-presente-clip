@@ -1,4 +1,1180 @@
-<script>
+<cart-drawer
+  style="position: fixed; top: 0; right: 0; z-index: 9999; width: 90%;"
+  section="{{ section.id }}"
+  id="mini-cart"
+  class="mini-cart drawer drawer--large"
+>
+  <span class="drawer__overlay"></span>
+
+  <header class="drawer__header">
+    <p class="drawer__title heading h6">
+      {%- case settings.cart_icon -%}
+        {%- when 'shopping_bag' -%}
+          {%- render 'icon' with 'header-cart' -%}
+
+        {%- when 'shopping_cart' -%}
+          {%- render 'icon' with 'header-shopping-cart' -%}
+
+        {%- when 'tote_bag' -%}
+          {%- render 'icon' with 'header-tote-bag' -%}
+      {%- endcase -%}
+
+      {%- if cart.item_count == 0 -%}
+        {{- 'cart.general.title' | t -}}
+      {%- else -%}
+        {{- 'cart.general.item_count' | t: count: cart.item_count -}}
+      {%- endif -%}
+    </p>
+
+    <button
+      type="button"
+      class="drawer__close-button tap-area"
+      data-action="close"
+      title="{{ 'general.accessibility.close' | t | escape }}"
+    >
+      {%- render 'icon' with 'close' -%}
+    </button>
+  </header>
+
+  {%- if cart.item_count == 0 -%}
+    <div class="drawer__content drawer__content--center">
+      <p>{{ 'cart.general.empty' | t }}</p>
+
+      <div class="button-wrapper">
+        <a href="{{ section.settings.empty_button_link }}" class="button button--primary">
+          {{- 'cart.general.start_shopping' | t -}}
+        </a>
+      </div>
+    </div>
+  {%- else -%}
+    <div class="drawer__content">
+      {%- if cart.item_count != 0 -%}
+        <div style="text-align:center; padding: 12px 3px;">
+          <span
+            ><img
+              style="width:22px; height:22px;"
+              src="https://cdn.shopify.com/s/files/1/0849/2253/2118/files/diff-icon-free-shipping_1.svg?v=1750097545"
+            >
+            Você ganhou frete grátis nesta compra.</span
+          >
+        </div>
+        {%- comment -%}
+          Primeiro, realizamos a contagem dos óculos, ignorando itens que possuem a tag "gift".
+        {%- endcomment -%}
+     {% assign num_glasses = 0 %}
+{% assign tem_clip_on = false %}
+
+{% for item in cart.items %}
+  {% if item.product.title contains 'Óculos' %}
+    {% unless item.product.tags contains 'gift' or item.product.tags contains 'Box' or item.product.title contains 'Clip-On' %}
+      {% assign num_glasses = num_glasses | plus: item.quantity %}
+    {% endunless %}
+
+    {% if item.product.title contains 'Clip-On' %}
+      {% assign tem_clip_on = true %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+{% if tem_clip_on %}
+  <div class="rc-upsell-bar">
+    <div class="rc-upsell-text">Você ganhou frete grátis no seu carrinho! 🖤</div>
+    <div class="rc-upsell-progress">
+      <div class="rc-upsell-fill" style="width: 100%;"></div>
+    </div>
+  </div>
+{% elsif num_glasses >= 2 %}
+  <div class="rc-upsell-bar">
+    <div class="rc-upsell-text">Oferta ativada: 1 óculos <strong>100% grátis</strong> no seu carrinho! 🖤</div>
+    <div class="rc-upsell-progress">
+      <div class="rc-upsell-fill" style="width: 100%;"></div>
+    </div>
+    <span style="margin-top:8px;">2 de 2 óculos adicionados</span>
+  </div>
+{% elsif num_glasses == 1 %}
+  <div class="rc-upsell-bar" data-location="top">
+    <div class="rc-upsell-text">COMPRE 1 LEVE 2: ADICIONE MAIS 1 ÓCULOS</div>
+    <div class="rc-upsell-progress">
+      <div class="rc-upsell-fill" style="width: 66%;"></div>
+    </div>
+    <span style="margin-top:8px;">1 de 2 óculos adicionado</span>
+  </div>
+{% endif %}
+
+      {%- endif -%}
+
+
+      
+      {%comment %}
+  <div class="banner">
+     <div class="info">
+      CORAL DAY 08.08 | COMPRE 1 LEVE 2 
+      <span>
+        A sua compra neste dia ajuda crianças com deficiência visual
+      </span>
+    </div>
+    <div class="countdown" id="countdown">
+      <div class="time-box">
+        <div class="time" id="hours">24</div>
+        <div class="label">HORAS</div>
+      </div>
+      <div class="time-box">
+        <div class="time" id="minutes">00</div>
+        <div class="label">MINUTOS</div>
+      </div>
+      <div class="time-box">
+        <div class="time" id="seconds">00</div>
+        <div class="label">SEGUNDOS</div>
+      </div>
+    </div>
+  </div>
+
+  
+  <style>
+  
+    .banner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px 20px;
+      flex-wrap: wrap;
+    }
+
+    .info {
+      font-size: 16px;
+      font-weight: bold;
+      text-align:center;
+    }
+
+    .info span {
+      display: block;
+      font-size: 14px;
+      font-weight: normal;
+      margin-top: 4px;
+    }
+
+    .info span svg {
+      width: 14px;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+
+    .countdown {
+      display: flex;
+      gap: 15px;
+      font-size: 18px;
+      text-align: center;
+    }
+
+    .countdown .time-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .countdown .time {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .countdown .label {
+      font-size: 10px;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 600px) {
+      .banner {
+        flex-direction: column;
+        text-align: center;
+      }
+      .countdown {
+        margin-top: 10px;
+      }
+    }
+  </style>
+
+ <script>
+  const targetDate = new Date("2025-08-09T00:00:00").getTime();
+
+  function updateCountdown() {
+    const now = new Date().getTime();
+    let totalSeconds = Math.floor((targetDate - now) / 1000);
+
+    if (totalSeconds <= 0) {
+      document.getElementById("hours").textContent = "00";
+      document.getElementById("minutes").textContent = "00";
+      document.getElementById("seconds").textContent = "00";
+      clearInterval(countdownInterval);
+      return;
+    }
+
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    document.getElementById("hours").textContent = String(hours).padStart(2, '0');
+    document.getElementById("minutes").textContent = String(minutes).padStart(2, '0');
+    document.getElementById("seconds").textContent = String(seconds).padStart(2, '0');
+  }
+
+  const countdownInterval = setInterval(updateCountdown, 1000);
+  updateCountdown();
+</script>
+{%endcomment %}
+
+      <!-- Definição das regras -->
+      {%- assign free_shipping_threshold = 1 -%}
+      {%- assign gift_threshold = 3 -%}
+      {%- assign num_glasses = 0 -%}
+      {%- assign has_gift = false -%}
+      {%- assign has_free_shipping = false -%}
+
+      {%- if progress_percentage > 100 -%}
+        {%- assign progress_percentage = 100 -%}
+      {%- endif -%}
+
+      {%- assign gift_threshold = 1 -%}
+      {%- assign cart_total = cart.total_price | default: 0 -%}
+      {%- assign progress_percentage = cart_total | divided_by: gift_threshold | times: 100 -%}
+      {%- assign gift_items_to_remove = '' -%}
+
+      {%- if progress_percentage < 90 -%}
+        {%- assign progress_percentage = 90 -%}
+      {%- endif -%}
+
+      {%- if progress_percentage > 100 -%}
+        {%- assign progress_percentage = 100 -%}
+      {%- endif -%}
+      {%- if section.settings.enable_free_gift -%}
+        {%- assign has_gift = false -%}
+        {%- for line_item in cart.items -%}
+          {%- if line_item.product.tags contains 'gift' -%}
+            {%- if cart_total < gift_threshold -%}
+              <script>
+                 document.addEventListener("DOMContentLoaded", function() {
+                  const giftThreshold = 17000; // Valor mínimo em centavos para manter o presente
+                  let attemptCount = 0; // Contador de tentativas
+                  const maxAttempts = 10; // Número máximo de tentativas
+                  const intervalTime = 500; // Intervalo entre tentativas em milissegundos (500 ms = 0,5 segundo)
+
+                  // Função para verificar o carrinho e remover o presente, se necessário
+                  function attemptToRemoveGift() {
+                    fetch("/cart.js")
+                      .then(response => response.json())
+                      .then(cart => {
+                        const cartTotal = cart.total_price;
+
+                        // Verifica se o total do carrinho está abaixo do limite e se o link de remoção está presente
+                        const removeGiftLink = document.getElementById("remove-gift-link");
+
+                        if (cartTotal < giftThreshold && removeGiftLink) {
+                          removeGiftLink.click(); // Clica automaticamente no link de remoção do presente
+                        }
+
+                        // Incrementa o contador de tentativas
+                        attemptCount++;
+
+                        // Para o intervalo se o item de presente foi removido ou se atingiu o número máximo de tentativas
+                        if (attemptCount >= maxAttempts || !document.getElementById("remove-gift-link")) {
+                          clearInterval(removalInterval); // Para o intervalo
+                        }
+                      });
+                  }
+
+                  // Configura o intervalo para executar a função a cada 500 ms
+                  const removalInterval = setInterval(attemptToRemoveGift, intervalTime);
+                });
+              </script>
+
+            {%- else -%}
+              {%- assign has_gift = true -%}
+            {%- endif -%}
+          {%- endif -%}
+        {%- endfor -%}
+
+        <!-- Mostrar o widget promocional apenas se não houver um presente no carrinho -->
+        {%- if section.settings.enable_free_gift and has_gift == false -%}
+          <!-- Definição das regras -->
+          {%- assign free_shipping_threshold = 1 -%}
+          {%- assign gift_threshold = 1 -%}
+          {%- assign num_glasses = 0 -%}
+          {%- assign has_gift = false -%}
+          {%- assign has_free_shipping = false -%}
+
+          <!-- Verifica itens no carrinho -->
+          {%- for line_item in cart.items -%}
+            {%- if line_item.product.title contains 'Clip' -%}
+              {%- assign num_glasses = num_glasses | plus: line_item.quantity -%}
+            {%- endif -%}
+
+            {%- if line_item.product.id == section.settings.produto_free_gift.id -%}
+              {%- assign has_gift = true -%}
+            {%- endif -%}
+
+            {%- if line_item.product.title == 'Frete Grátis' -%}
+              {%- assign has_free_shipping = true -%}
+            {%- endif -%}
+          {%- endfor -%}
+
+          {%- assign remaining_glasses = gift_threshold | minus: num_glasses -%}
+          {%- assign progress_percentage = num_glasses | times: 100 | divided_by: gift_threshold -%}
+
+          {%- if progress_percentage > 100 -%}
+            {%- assign progress_percentage = 100 -%}
+          {%- endif -%}
+          {% comment %}
+            <!-- Mensagem de Frete Grátis -->
+            {%- if cart.item_count >= free_shipping_threshold -%}
+              <div class="titulo-frete">
+                <p class="icart-message congrats"> <strong>Frete Grátis Ativado!</strong><br> Aproveite o envio gratuito para sua compra.</p>
+              </div>
+            {%- endif -%}
+          {% endcomment %}
+          <div class="icart-progress-bar-widget">
+            <div class="icart-pg-progress-container">
+              <!-- Incentivo para adicionar mais óculos e ganhar o brinde -->
+              {%- if num_glasses < 0 -%}
+                <p class="icart-message" style="text-align:center;">
+                  <strong>🎉 Aproveite, você ganhou Frete Grátis!</strong> <br>
+                </p>
+                <p class="icart-message">Adicione mais um óculos por <strong>apenas R$ 70</strong>.</p>
+              {%comment%}{%- elsif num_glasses < gift_threshold -%}
+                <p class="icart-message" style="text-align:center;">
+                  ✨ Você resgatou o <strong>segundo óculos por R$ 70,00 e ganhou Frete Grátis!</strong> <br>
+                </p>
+                <p class="icart-message">
+                  Adicionando mais {{ remaining_glasses }} óculos você ganha uma
+                  <strong>Pulseira Riviera Luxy da RC™</strong> de presente.
+                </p> {% endcomment %}
+              {%- else -%}
+                <p class="icart-message congrats" style="text-align:center;">Parabéns! Você ganhou um presente 🎁</p>
+              {%- endif -%}
+
+              <div class="icart-progressbar-layout">
+                <div class="icart-range-active" style="width: {{ progress_percentage }}%;"></div>
+              </div>
+
+                 {%- if num_glasses >= gift_threshold and has_gift == false -%}
+
+                <div class="icart-product-details">
+                  <div class="icart-product-image">
+                    <a
+                      href="https://www.userosacoral.com/"
+                      class="icart-product-image"
+                    >
+                      <img
+                        src="{{ section.settings.produto_free_gift.featured_image | img_url: '100x100' }}"
+                        alt="{{ section.settings.produto_free_gift.title }}"
+                      >
+                    </a>
+                  </div>
+                  <div class="icart-product-info">
+                    <p class="icart-product-title">{{ section.settings.produto_free_gift.title }}</p>
+                    <p class="icart-product-threshold">Resgate agora para adicionar ao seu carrinho!</p>
+                    {%- render 'product-item-especial',
+                      product: section.settings.produto_free_gift,
+                      reduced_content: true,
+                      reduced_font_size: true,
+                      hide_secondary_image: true,
+                      sizes_attribute: '(max-width: 740px) 65px, 92px'
+                    -%}
+                  </div>
+                </div>
+
+              {% elsif num_glasses < 2 %}
+                <div class="icart-product-details" style="display:none;">
+                  <div class="icart-product-image">
+                    <a
+                      href="https://www.userosacoral.com/products/pulseira-luxy-em-prata-925-com-zirconias-brilhantes"
+                      class="icart-product-image"
+                    >
+                      <img
+                        src="{{ section.settings.produto_free_gift.featured_image | img_url: '100x100' }}"
+                        alt="{{ section.settings.produto_free_gift.title }}"
+                      >
+                    </a>
+                  </div>
+                  <div class="icart-product-info">
+                    <p class="icart-product-title">{{ section.settings.produto_free_gift.title }}</p>
+                    <p class="icart-product-threshold">Um toque de elegância para complementar seu estilo.</p>
+                  </div>
+                </div>
+
+              {%- else -%}
+                <div class="icart-product-details">
+                  <div class="icart-product-image">
+                    <a
+                      href="https://www.userosacoral.com/products/pulseira-luxy-em-prata-925-com-zirconias-brilhantes"
+                      class="icart-product-image"
+                    >
+                      <img
+                        src="{{ section.settings.produto_free_gift.featured_image | img_url: '100x100' }}"
+                        alt="{{ section.settings.produto_free_gift.title }}"
+                      >
+                    </a>
+                  </div>
+                  <div class="icart-product-info">
+                    <p class="icart-product-title">{{ section.settings.produto_free_gift.title }}</p>
+                    <p class="icart-product-threshold">Um toque de elegância para complementar seu estilo.</p>
+                  </div>
+                </div>
+              {%- endif -%}
+            </div>
+          </div>
+
+        {%- else -%}
+          <!-- Mostrar mensagem e detalhes do brinde já resgatado -->
+          <!--
+            <div class="icart-progress-bar-widget">
+              <div class="icart-pg-progress-container">
+                <div class="icart-pg-message-container">
+                  <p class="icart-message incentive"></p>
+                </div>
+                   <div class="icart-progressbar-layout">
+                      <div class="icart-range-active" style="width: {{ progress_percentage | round: 2 }}%;"></div>
+                    </div>
+
+              </div>
+            </div>
+          -->
+        {%- endif -%}
+      {%- endif -%}
+
+      <style>
+        .titulo-frete {
+            color: #333; /* Texto escuro para contraste suave */
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 12px;
+            margin: 15px 0;
+        }
+
+        .titulo-frete .icart-message {
+            font-size: 14px;
+            font-weight: 500;
+            margin: 4px 0;
+        }
+
+        .titulo-frete .icart-message.congrats {
+            font-size: 11px;
+            font-weight: 500;
+            color: #1AA915; /* Verde escuro para sofisticação */
+            text-transform: uppercase;
+        }
+
+
+            .icart-progress-bar-widget {
+                background-color: #2B2B2B;
+                border-radius: 8px;
+                max-width: 360px; /* 20% menor */
+                margin: 20px auto;
+                padding: 16px; /* 20% menor */
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            }
+
+            .icart-pg-message-container {
+                text-align: center;
+                margin-bottom: 12px; /* 20% menor */
+            }
+
+            .icart-message {
+                font-size: 11px; /* 20% menor */
+                color: #FFF;
+                font-weight: 500;
+            }
+
+            .icart-message.congrats {
+                color: #FFF;
+                font-size: 12px; /* 20% menor */
+            }
+
+            .icart-product-details {
+                display: flex;
+                align-items: center;
+                margin: 12px 0; /* 20% menor */
+                background-color: #282828;
+                padding: 8px; /* 20% menor */
+                border-radius: 6px;
+            }
+
+            .icart-product-image img {
+                border-radius: 8px;
+                width: 60px; /* 20% menor */
+                height: 60px; /* 20% menor */
+                object-fit: cover;
+            }
+
+            .icart-product-info {
+                margin-left: 12px; /* 20% menor */
+                width: 200px;
+            }
+
+            .icart-product-title {
+                margin: 0;
+                color: #FFF;
+                font-size: 13px; /* 20% menor */
+                font-weight: bold;
+            }
+
+            .icart-product-threshold {
+                margin: 4px 0 0; /* 20% menor */
+                color: #CCC;
+                font-size: 10.5px; /* 20% menor */
+            }
+
+            .icart-progressbar-layout {
+                margin: 12px 0; /* 20% menor */
+                background-color: #4D4D4D;
+                height: 10px; /* 20% menor */
+                border-radius: 5px;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .icart-range-active {
+                 background: linear-gradient(45deg, #AAAAAA 25%, #888888 25%, #888888 50%, #AAAAAA 50%, #AAAAAA 75%, #888888 75%);
+                background-size: 30px 30px;
+                height: 100%;
+                width: 100%;
+                transition: width 0.5s ease;
+                animation: slideStripes 3s linear infinite;
+            }
+
+            @keyframes slideStripes {
+                0% {
+                    background-position: 0 0;
+                }
+                100% {
+                    background-position: 30px 0;
+                }
+            }
+
+            .icart-special-offer-message {
+                text-align: center;
+                font-size: 11px; /* 20% menor */
+                color: #FFF;
+                margin-top: 8px; /* 20% menor */
+            }
+      </style>
+
+<!--
+   {% assign product_l = all_products['case-de-couro-brinde'] %}
+  {% render 'lenco' product:product_l %}
+    -->
+
+
+
+      <form id="mini-cart-form" action="{{ routes.cart_url }}" novalidate method="post">
+        <input type="hidden" name="checkout">
+
+        {%- for line_item in cart.items -%}
+          {%- if line_item.product.tags contains 'gift' and cart_total < gift_threshold -%}
+            <script>
+                 document.addEventListener("DOMContentLoaded", function() {
+                const giftThreshold = 19700; // Valor mínimo em centavos para manter o presente
+
+                // Função para verificar o carrinho e remover o presente, se necessário
+                function attemptToRemoveGift() {
+                  fetch("/cart.js")
+                    .then(response => response.json())
+                    .then(cart => {
+                      const cartTotal = cart.total_price;
+
+                      // Verifica se o total do carrinho está abaixo do limite e se o link de remoção está presente
+                      const removeGiftLink = document.getElementById("remove-gift-link");
+
+                      if (cartTotal < giftThreshold && removeGiftLink) {
+                        removeGiftLink.click(); // Clica automaticamente no link de remoção do presente
+                      }
+                    });
+                }
+
+                // Configura o MutationObserver para monitorar o cart drawer
+                const cartDrawer = document.getElementById("mini-cart"); // Elemento do cart drawer
+                if (cartDrawer) {
+                  const observer = new MutationObserver((mutationsList) => {
+                    // Para cada mudança detectada, tente remover o presente
+                    for (let mutation of mutationsList) {
+                      if (mutation.type === "childList" || mutation.type === "attributes") {
+                        attemptToRemoveGift(); // Executa a verificação e remoção sempre que houver mudanças no cart drawer
+                      }
+                    }
+                  });
+
+                  // Configura o observer para observar mudanças no cart drawer
+                  observer.observe(cartDrawer, { attributes: true, childList: true, subtree: true });
+                }
+              });
+            </script>
+          {%- endif -%}
+
+          <line-item class="line-item">
+            <div class="line-item__content-wrapper">
+        {% if line_item.product.handle != "case-de-couro-brinde" %}
+              <a href="{{ line_item.url }}" class="line-item__image-wrapper" tabindex="-1" aria-hidden="true">
+                <span class="line-item__loader" hidden>
+                  <span class="line-item__loader-spinner spinner" hidden>
+                    {%- render 'icon' with 'spinner', width: 16, height: 16, stroke_width: 6 -%}
+                  </span>
+                  <span class="line-item__loader-mark" hidden>
+                    {%- render 'icon' with 'check', width: 20, height: 20 -%}
+                  </span>
+                </span>
+
+                <img
+                  class="line-item__image"
+                  loading="sizes"
+                  sizes="(max-width: 740px) 80px, 92px"
+                  {% render 'image-attributes', image: line_item.image, sizes: '80,92,160,184,240,276' %}
+                >
+              </a>
+            {% else %}
+               <a  class="line-item__image-wrapper" tabindex="-1" aria-hidden="true">
+                <span class="line-item__loader" hidden>
+                  <span class="line-item__loader-spinner spinner" hidden>
+                    {%- render 'icon' with 'spinner', width: 16, height: 16, stroke_width: 6 -%}
+                  </span>
+                  <span class="line-item__loader-mark" hidden>
+                    {%- render 'icon' with 'check', width: 20, height: 20 -%}
+                  </span>
+                </span>
+
+                <img
+                  class="line-item__image"
+                  loading="sizes"
+                  sizes="(max-width: 740px) 80px, 92px"
+                  {% render 'image-attributes', image: line_item.image, sizes: '80,92,160,184,240,276' %}
+                >
+              </a>
+            {% endif %}
+
+              {%- capture unit_price -%}
+                {%- if line_item.unit_price_measurement -%}
+                  <div class="price text--subdued">
+                    <div class="unit-price-measurement">
+                      <span class="unit-price-measurement__price">{{ line_item.unit_price | money }}</span>
+                      <span class="unit-price-measurement__separator">/</span>
+
+                      {%- if line_item.unit_price_measurement.reference_value != 1 -%}
+                        <span class="unit-price-measurement__reference-value">{{ line_item.unit_price_measurement.reference_value }}</span>
+                      {%- endif -%}
+
+                      <span class="unit-price-measurement__reference-unit">{{ line_item.unit_price_measurement.reference_unit }}</span>
+                    </div>
+                  </div>
+                {%- endif -%}
+              {%- endcapture -%}
+
+              {%- capture line_price -%}
+                {%- comment -%}
+                IMPLEMENTATION NOTE: The designer wanted to show the "compare at price" on cart. In case an automatic discount is applied
+                  to a line item though, the "real" discount takes precedence over the compare at price
+                {%- endcomment -%}
+
+                <span class="price {% if line_item.original_line_price > line_item.final_line_price or line_item.final_line_price == 0 or line_item.variant.compare_at_price > line_item.variant.price %}price--highlight{% endif %}">
+                  <span class="visually-hidden">{{ 'product.general.sale_price' | t }}</span>
+
+                  {%- if line_item.final_line_price == 0 -%}
+                  {%- else -%}
+                    {{- line_item.final_line_price | money -}}
+                  {%- endif -%}
+                </span>
+
+                {%- if line_item.original_line_price > line_item.final_line_price or line_item.variant.compare_at_price > line_item.variant.price -%}
+                  <span class="price price--compare">
+                    <span class="visually-hidden">{{ 'product.general.regular_price' | t }}</span>
+
+                    {%- if line_item.original_line_price > line_item.final_line_price -%}
+                      {{- line_item.original_line_price | money -}}
+                    {%- else -%}
+                      {{- line_item.variant.compare_at_price | times: line_item.quantity | money -}}
+                    {%- endif -%}
+                  </span>
+                {%- endif -%}
+              {%- endcapture -%}
+
+              <div class="line-item__info" style="width:100%;">
+                <div
+                  style="margin:0; display:flex; align-items:start; justify-content:center; flex-direction:column;"
+                  class="product-item-meta"
+                >
+                  {%- if settings.show_vendor -%}
+                    {%- assign vendor_handle = line_item.vendor | handle -%}
+                    {%- assign collection_for_vendor = collections[vendor_handle] -%}
+
+                    {%- unless collection_for_vendor.empty? -%}
+                      <a
+                        class="product-item-meta__vendor heading heading--xxsmall"
+                        href="{{ collection_for_vendor.url }}"
+                      >
+                        {{- line_item.vendor -}}
+                      </a>
+                    {%- else -%}
+                      <a
+                        class="product-item-meta__vendor heading heading--xxsmall"
+                        href="{{ line_item.vendor | url_for_vendor }}"
+                      >
+                        {{- line_item.vendor -}}
+                      </a>
+                    {%- endunless -%}
+                  {%- endif -%}
+     {% if line_item.product.handle != "case-de-couro-brinde" %}
+                  <a href="{{ line_item.url }}" style="margin:0;" class="product-item-meta__title text--small">
+                    {{- line_item.product.title -}}
+                  </a>
+                
+                      {% else %}
+                     <a  style="margin:0;" class="product-item-meta__title text--small">
+                    {{- line_item.product.title -}}
+                  </a>
+                      {% endif %}
+
+                  {%- capture line_item_properties -%}
+                     {% comment %}
+                    {%- unless line_item.product.has_only_default_variant -%}
+                      <span class="product-item-meta__property text--subdued text--xsmall">{{ line_item.variant.title }}</span>
+                    {%- endunless -%}
+
+                   
+
+                    -- NOME DA VARIANTE DO PRODUTO
+                    
+                    {%- if line_item.selling_plan_allocation -%}
+                      <span class="product-item-meta__property text--subdued text--xsmall">{{ line_item.selling_plan_allocation.selling_plan.name }}</span>
+                    {%- endif -%}
+                     {% endcomment %}
+                    <div style="margin:0;" class="price-list price-list--stack">
+                  {{- line_price -}}
+                </div>
+
+                    {%- unless line_item.properties == blank -%}
+                      <ul class="product-item-meta__property list--unstyled text--subdued text--xsmall" role="list">
+                        {%- for property in line_item.properties -%}
+                          {%- assign first_character_in_key = property.first | truncate: 1, '' -%}
+
+                          {%- if property.last == blank or first_character_in_key == '_' -%}
+                            {%- continue -%}
+                          {%- endif -%}
+
+                          <li>{{ property.first }}: {{ property.last }}</li>
+                        {%- endfor -%}
+                      </ul>
+                    {%- endunless -%}
+                  {%- endcapture -%}
+
+                  {%- if line_item_properties != blank -%}
+                    <div style="margin:0px;" class="product-item-meta__property-list">
+                      {{- line_item_properties -}}
+                    </div>
+                  {%- endif -%}
+                  {%- if line_item.product.tags contains 'gift' -%}
+                  {% else %}
+                    <div class="product-item-meta__price-list-container text--small">
+                      {%- if unit_price != blank -%}
+                        <div class="price-list hidden-phone">
+                          {{- unit_price -}}
+                        </div>
+                      {%- endif -%}
+                    </div>
+                  {%- endif -%}
+                </div>
+
+                {%- if line_item.line_level_discount_allocations != blank -%}
+                  <ul
+                    style="margin-top:0px; margin-bottom:5px;"
+                    class="line-item__discount-list list--unstyled"
+                    role="list"
+                  >
+                    {%- for discount_allocation in line_item.line_level_discount_allocations -%}
+                      {%- for discount_allocation in line_item.line_level_discount_allocations -%}
+                        <li class="line-item__discount-badge discount-badge">
+                          {%- render 'icon' with 'discount-badge' -%}
+                          {{ discount_allocation.discount_application.title }}
+                        </li>
+                      {%- endfor -%}
+                    {%- endfor -%}
+                  </ul>
+                {%- endif -%}
+
+                {%- assign max_allowed_quantity = '' -%}
+                {%- assign allow_more = true -%}
+
+                {%- if line_item.variant.inventory_management == 'shopify'
+                  and line_item.variant.inventory_policy == 'deny'
+                  and line_item.variant.inventory_quantity <= line_item.quantity
+                -%}
+                  {%- assign max_allowed_quantity = line_item.variant.inventory_quantity -%}
+                  {%- assign allow_more = false -%}
+                {%- endif -%}
+
+
+  <!-- Aqui o código só será executado se nenhum produto for "lenco-brinde" -->
+
+                <line-item-quantity style="margin-top:0px; position:relative;" class="line-item__quantity">
+                  {%- if line_item.product.handle == 'case-de-couro-brinde' -%}
+                    <!-- Caso o produto tenha a tag 'gift', exibir apenas o botão de remover -->
+                    <a
+                      id="remove-gift-link"
+                      style="margin-left:0px; "
+                      href="{{ line_item.url_to_remove }}"
+                      class="line-item__remove-button link text--subdued text--xxsmall"
+                      data-no-instant
+                      >Remover Presente</a
+                    >
+                  {%- else -%}
+                    <!-- Exibir o seletor de quantidade padrão caso o produto não tenha a tag 'gift' -->
+                 
+                     {% if line_item.product.handle != "case-de-couro-brinde" %}
+                    <span>Qtd:</span>
+                    <div class="quantity-selector quantity-selector--small">
+                    
+                      <a
+                        href="{{ routes.cart_change_url }}?quantity={{ line_item.quantity | minus: 1 }}&line={{ forloop.index }}"
+                        class="quantity-selector__button"
+                        aria-label="{{ 'cart.general.decrease_quantity' | t | escape }}"
+                        data-no-instant
+                      >
+                        {%- render 'icon' with 'minus' -%}
+                      </a>
+
+                      <input
+                        is="input-number"
+                        class="quantity-selector__input text--xsmall"
+                        autocomplete="off"
+                        type="text"
+                        inputmode="numeric"
+                        name="updates[]"
+                        data-line="{{ forloop.index }}"
+                        value="{{ line_item.quantity }}"
+                        {% if max_allowed_quantity != '' %}
+                          max="{{ max_allowed_quantity }}"
+                        {% endif %}
+                        size="{{ line_item.quantity | append: '' | size | at_least: 2 }}"
+                        aria-label="{{ 'cart.general.change_quantity' | t | escape }}"
+                      >
+
+                      {%- if allow_more -%}
+                        <a
+                          href="{{ routes.cart_change_url }}?quantity={{ line_item.quantity | plus: 1 }}&line={{ forloop.index }}"
+                          class="quantity-selector__button"
+                          aria-label="{{ 'cart.general.increase_quantity' | t | escape }}"
+                          data-no-instant
+                        >
+                          {%- render 'icon' with 'plus' -%}
+                        </a>
+                      {%- else -%}
+                        <span
+                          class="quantity-selector__button"
+                          aria-label="{{ 'cart.general.no_more_stock' | t | escape }}"
+                          data-tooltip="{{ 'cart.general.no_more_stock' | t | escape }}"
+                        >
+                          {%- render 'icon' with 'plus' -%}
+                        </span>
+                      {%- endif -%}
+                    </div>
+                  {% else %}
+                     <span>Qtd:</span>
+                    <div class="quantity-selector quantity-selector--small">
+
+                      <input
+                        is="input-number"
+                        class="quantity-selector__input text--xsmall"
+                        autocomplete="off"
+                        type="text"
+                        inputmode="numeric"
+                        name="updates[]"
+                        data-line="{{ forloop.index }}"
+                        value="{{ line_item.quantity }}"
+                        {% if max_allowed_quantity != '' %}
+                          max="{{ max_allowed_quantity }}"
+                        {% endif %}
+                        size="{{ line_item.quantity | append: '' | size | at_least: 2 }}"
+                        aria-label="{{ 'cart.general.change_quantity' | t | escape }}"
+                        readonly
+                      >
+
+                   
+                    
+                    </div>
+                       {% endif %}
+
+
+                    <a
+                      href="{{ line_item.url_to_remove }}"
+                      data-no-instant
+                      style="position:absolute; left:95%;"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 32 32"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <defs>
+                          <style>.cls-1{fill:none;}</style>
+                        </defs>
+                        <title/>
+                        <g data-name="Layer 2" id="Layer_2">
+                          <path d="M20,29H12a5,5,0,0,1-5-5V12a1,1,0,0,1,2,0V24a3,3,0,0,0,3,3h8a3,3,0,0,0,3-3V12a1,1,0,0,1,2,0V24A5,5,0,0,1,20,29Z"/>
+                          <path d="M26,9H6A1,1,0,0,1,6,7H26a1,1,0,0,1,0,2Z"/>
+                          <path d="M20,9H12a1,1,0,0,1-1-1V6a3,3,0,0,1,3-3h4a3,3,0,0,1,3,3V8A1,1,0,0,1,20,9ZM13,7h6V6a1,1,0,0,0-1-1H14a1,1,0,0,0-1,1Z"/>
+                          <path d="M14,23a1,1,0,0,1-1-1V15a1,1,0,0,1,2,0v7A1,1,0,0,1,14,23Z"/>
+                          <path d="M18,23a1,1,0,0,1-1-1V15a1,1,0,0,1,2,0v7A1,1,0,0,1,18,23Z"/>
+                        </g>
+                        <g id="frame">
+                          <rect class="cls-1" height="2" width="2"/>
+                        </g>
+                      </svg>
+                    </a>
+                  {%- endif -%}
+                </line-item-quantity>
+                
+
+              </div>
+            </div>
+          </line-item>
+        {%- endfor -%}
+        {%- if gift_items_to_remove != '' -%}
+          <meta http-equiv="refresh" content="0;url=/cart?{{ gift_items_to_remove | remove_first: '&' }}">
+        {%- endif -%}
+      </form>
+      {% comment %}
+        ------------------------------------ Componente adicionar mais Produtos carrinho ---------------------------------------------
+      {% endcomment %}
+{% assign produtos_no_carrinho = ',' %}
+{% assign total_recomendados_disponiveis = 0 %}
+{% assign ocultar_case_de_couro = false %}
+
+{% for item in cart.items %}
+  {% assign produtos_no_carrinho = produtos_no_carrinho | append: item.product.id | append: ',' %}
+
+  {% if item.product.title contains 'Clip-On' %}
+    {% assign ocultar_case_de_couro = true %}
+  {% endif %}
+{% endfor %}
+
+{% assign sorted_products = collections.all.products | sort: 'price' | reverse %}
+
+{% for product in sorted_products %}
+  {% assign id_completo = ',' | append: product.id | append: ',' %}
+
+  {% if product.tags contains 'recomendado' and produtos_no_carrinho contains id_completo %}
+    {% continue %}
+  {% endif %}
+
+  {% if product.tags contains 'recomendado' and product.available %}
+    {% assign total_recomendados_disponiveis = total_recomendados_disponiveis | plus: 1 %}
+  {% endif %}
+{% endfor %}
+
+{% if total_recomendados_disponiveis > 0 %}
+  {% assign tem_clip_on = false %}
+  {% assign tem_coral_bag = false %}
+
+  {% for item in cart.items %}
+    {% if item.product.title contains 'Clip-On' %}
+      {% assign tem_clip_on = true %}
+    {% endif %}
+    {% if item.product.title contains 'Coral Bag' %}
+      {% assign tem_coral_bag = true %}
+    {% endif %}
+  {% endfor %}
+
+  {% unless tem_clip_on and tem_coral_bag %}
+    <h1 class="title-recon-car">O toque final que 9 em 10 Coralindas escolhem.✨</h1>
+  {% endunless %}
+
+  <div class="Container-main-row">
+
+    {%- comment -%}
+      Exibir na ordem de prioridade: Coral Bag → Case de Couro → Caixa Premium
+    {%- endcomment -%}
+    {% assign prioridade = "Coral Bag,Case de Couro,Caixa Premium" | split: "," %}
+
+    {% for nome_prioritario in prioridade %}
+      {% for product in sorted_products %}
+        {% if product.tags contains 'recomendado' and product.available %}
+          {% assign id_completo = ',' | append: product.id | append: ',' %}
+
+          {% if produtos_no_carrinho contains id_completo %}
+            {% continue %}
+          {% endif %}
+
+          {% if ocultar_case_de_couro and product.title contains 'Case de Couro' %}
+            {% continue %}
+          {% endif %}
+
+          {% if product.title contains nome_prioritario %}
+            <div class="content-item">
+              <a href="{{ product.url }}">
+                <div class="container-img">
+                  <img src="{{ product.featured_image | img_url: 'medium' }}" alt="{{ product.title }}">
+                </div>
+              </a>
+
+              <div class="container-infoTwo">
+                <a href="{{ product.url }}">
+                  <h1 style="font-size:12px;">
+                    {% assign nomes = product.title | split: ' ' %}
+                    {% for nome in nomes limit: 4 %}
+                      {{ nome }}
+                    {% endfor %}
+                  </h1>
+                </a>
+
+                <p style="text-decoration: line-through;">{{ product.compare_at_price | money }}</p>
+                <p><strong>{{ product.price | money }}</strong></p>
+              </div>
+
+              {%- form 'product', product, is: 'product-form' -%}
+                <input type="hidden" disabled name="id" value="{{ product.selected_or_first_available_variant.id }}">
+                <product-payment-container>
+                  <button
+                    type="submit"
+                    is="loader-button"
+                    data-product-add-to-cart-button
+                    data-button-content="{% if product.template_suffix == 'pre-order' %}{{ 'product.form.pre_order' | t | escape }}{% else %}{{ 'product.form.add_to_cart' | t | escape }}{% endif %}"
+                    class="btn-recon-car  {% unless product.selected_or_first_available_variant.available %}button--ternary{% else %}{% if  template.suffix != 'quick-buy-popover' %}button--secondary{% else %}button--primary{% endif %}{% endunless %} button--full"
+                  >
+                    Adicionar
+                  </button>
+                </product-payment-container>
+              {%- endform -%}
+            </div>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+
+    {%- comment -%}
+      Agora exibir os outros recomendados (exceto os prioritários)
+    {%- endcomment -%}
+    {% for product in sorted_products %}
+      {% if product.tags contains 'recomendado' and product.available %}
+        {% assign id_completo = ',' | append: product.id | append: ',' %}
+
+        {% if produtos_no_carrinho contains id_completo %}
+          {% continue %}
+        {% endif %}
+
+        {% if ocultar_case_de_couro and product.title contains 'Case de Couro' %}
+          {% continue %}
+        {% endif %}
+
+        {% if product.title contains 'Coral Bag' or product.title contains 'Case de Couro' or product.title contains 'Caixa Premium' %}
+          {% continue %}
+        {% endif %}
+
+        <div class="content-item">
+          <a href="{{ product.url }}">
+            <div class="container-img">
+              <img src="{{ product.featured_image | img_url: 'medium' }}" alt="{{ product.title }}">
+            </div>
+          </a>
+
+          <div class="container-infoTwo">
+            <a href="{{ product.url }}">
+              <h1 style="font-size:12px;">
+                {% assign nomes = product.title | split: ' ' %}
+                {% for nome in nomes limit: 4 %}
+                  {{ nome }}
+                {% endfor %}
+              </h1>
+            </a>
+
+            <p style="text-decoration: line-through;">{{ product.compare_at_price | money }}</p>
+            <p><strong>{{ product.price | money }}</strong></p>
+          </div>
+
+          {%- form 'product', product, is: 'product-form' -%}
+            <input type="hidden" disabled name="id" value="{{ product.selected_or_first_available_variant.id }}">
+            <product-payment-container>
+              <button
+                type="submit"
+                is="loader-button"
+                data-product-add-to-cart-button
+                data-button-content="{% if product.template_suffix == 'pre-order' %}{{ 'product.form.pre_order' | t | escape }}{% else %}{{ 'product.form.add_to_cart' | t | escape }}{% endif %}"
+                class="btn-recon-car  {% unless product.selected_or_first_available_variant.available %}button--ternary{% else %}{% if  template.suffix != 'quick-buy-popover' %}button--secondary{% else %}button--primary{% endif %}{% endunless %} button--full"
+              >
+                Adicionar
+              </button>
+            </product-payment-container>
+          {%- endform -%}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+
+
+      {% comment %}
+        -------------------------------------- Componente info -------------------------------------------
+      {% endcomment %}
+
+      <div class="container-main-info">
+        <div class="container-input">
+          {% comment %}
+            <h1 class="label-cupom">Tem um cupom? Insira aqui.</h1>
+              <div class="input-button-container">
+                <input type="text" placeholder="Digite aqui" id="cumpom-input">
+                <button onclick="aplicarCupom()">Aplicar</button>
+              </div>
+          {% endcomment %}
+
+          <div id="resultado-cupom" style="margin-top:10px; font-weight:bold;"></div>
+
+          <div class="container-info-end">
+            <h1 class="title_resumo" style="font-family: 'Montserrat', Arial, Helvetica, sans-serif;">
+              Resumo da sua compra:
+            </h1>
+            <div class="content-info">
+              <h1>Subtotal dos produtos</h1>
+              <p id="subtotal">{{ cart.original_total_price | money }}</p>
+            </div>
+
+            {%- for discount_application in cart.cart_level_discount_applications -%}
+              <div class="content-info desconto-checkout">
+                <h1>Desconto aplicado</h1>
+                <p>-{{ discount_application.total_allocated_amount | money }}</p>
+              </div>
+            {%- endfor -%}
+
+            {% assign total_glasses = 0 %}
+
+            {% for product in cart.items %}
+              {% if product.product.title contains 'Óculos' %}
+                {% unless product.product.tags contains 'gift' %}
+                  {% assign total_glasses = total_glasses | plus: product.quantity %}
+                {% endunless %}
+              {% endif %}
+            {% endfor %}
+
+            {% assign desconto = cart.original_total_price | minus: cart.total_price %}
+
+            {% if total_glasses > 1 %}
+              <div class="content-info desconto-checkout">
+                <h1 style="color:#4bca5a;">Você economizou</h1>
+                <p style="color:#4bca5a;">-{{ desconto | money }}</p>
+              </div>
+            {% endif %}
+
+            <div class="content-info">
+              <h1>Entrega</h1>
+              <p>Frete grátis &#128420;</p>
+            </div>
+            <hr>
+
+            <div class="content-info">
+              <h1 style="font-weight:800;">Total final</h1>
+              <p id="total" style="font-weight:800;">
+                {{ cart.total_price | money }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <script>
     
   const urlCSV = "{{ settings.url_planilha_cupom }}";
   let cupons = [];
@@ -289,9 +1465,9 @@
         }
       </style>
 
-      {%- comment -%}
+      {% comment %}
         ------------------------------------ Fim Componentes---------------------------------------------
-      {%- endcomment -%}
+      {% endcomment %}
 
       {%- if section.settings.show_recommendations -%}
         <cart-drawer-recommendations
@@ -327,6 +1503,7 @@
                       {%- assign shown_products_count = 0 -%}
 
                       {%- for product in recommendations.products -%}
+                        <!-- if product.tags contains 'PROT-UV' -->
                         {%- if shown_products_count >= 6 -%}
                           {%- break -%}
                         {%- endif -%}
@@ -343,6 +1520,7 @@
                             sizes_attribute: '(max-width: 740px) 65px, 92px'
                           -%}
                         {%- endif -%}
+                        <!-- endif -->
                       {%- endfor -%}
                     </div>
                   </div>
@@ -359,6 +1537,27 @@
         </cart-drawer-recommendations>
       {%- endif -%}
     </div>
+
+    {% comment %}
+      <div class="mini-cart__cashback-section">
+        <hr class="divider">
+        <div class="mini-cart__cashback-container">
+          <p class="mini-cart__cashback-text text--xsmall">
+            <svg
+              focusable="false"
+              width="16"
+              height="16"
+              class="{{ icon_class }}"
+              viewBox="0 0 10 10"
+              style="margin-right: var(--atlas-space-mini);"
+            >
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M9.93734 1.1171C9.97075 0.521457 9.47854 0.0292498 8.88291 0.0626607L5.39562 0.258271C5.15016 0.27204 4.91836 0.375751 4.74452 0.549595L0.707107 4.58701C0.316582 4.97753 0.316583 5.6107 0.707107 6.00122L3.99878 9.29289C4.3893 9.68342 5.02247 9.68342 5.41299 9.29289L9.4504 5.25548C9.62425 5.08163 9.72796 4.84984 9.74173 4.60438L9.93734 1.1171ZM7.05882 2.94118C7.3837 3.26605 7.91042 3.26605 8.23529 2.94118C8.56017 2.6163 8.56017 2.08958 8.23529 1.76471C7.91042 1.43983 7.3837 1.43983 7.05882 1.76471C6.73395 2.08958 6.73395 2.6163 7.05882 2.94118Z" fill="currentColor"></path>
+            </svg>
+            Receba&nbsp;<strong class="cashback-amount">{{ formatted_cashback }}</strong>&nbsp;de cashback nessa compra!
+          </p>
+        </div>
+      </div>
+    {% endcomment %}
 
     <style>
       .rc-upsell-bar {
@@ -498,11 +1697,41 @@
         <a id="btn-finalizar" href="/cart" class="button button--primary button--full" data-no-instant=""
           >PRÓXIMA ETAPA • {{ cart.total_price | money -}}
         </a>
+        <!--
+          <form action="/cart" method="post" novalidate>
+            <button
+              type="submit"
+              name="checkout"
+              id="btn-finalizar"
+              class="button button--primary button--full"
+              data-no-instant=""
+            >
+              FINALIZAR COMPRA • {{ cart.total_price | money }}
+            </button>
+          </form>
+      -->
       {%- else -%}
         <a id="btn-finalizar" href="{{ routes.cart_url }}" class="button button--primary button--full" data-no-instant>
           {{- 'cart.general.go_to_cart' | t -}}
         </a>
       {%- endif -%}
+        <!--
+
+{%- if go_direct_to_checkout -%}
+  <a id="btn-finalizar" href="/checkout" class="button button--primary button--full" data-no-instant>
+      PRÓXIMA ETAPA • {{ cart.total_price | money }}
+  </a>
+{%- else -%}
+  {%- if section.settings.show_checkout_button -%}
+    <a id="btn-finalizar" href="/cart" class="button button--primary button--full" data-no-instant>
+      PRÓXIMA ETAPA • {{ cart.total_price | money }}
+    </a>
+  {%- else -%}
+    <a id="btn-finalizar" href="{{ routes.cart_url }}" class="button button--primary button--full" data-no-instant>
+        PRÓXIMA ETAPA • {{ cart.total_price | money }}
+    </a>
+  {%- endif -%}
+{%- endif -%}-->
 
     </footer>
   {%- endif -%}
@@ -529,94 +1758,6 @@
   {%- endif -%}
 </cart-drawer>
 
-<style>
-.cart-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  font-family: Arial, sans-serif;
-  padding-top: 20px;
-}
-
-.cart-img {
-  width: 90px;
-  height: auto;
-}
-
-.cart-info {
-  flex-grow: 1;
- 
-}
-
-.cart-info h4 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 400;
-  font-family: 'Montserrat', sans-serif;
-}
-
-.cart-info .price {
-  margin: 2px 0 8px;
-  font-size: 10px;
-  color: #333;
-  font-family: 'Montserrat', sans-serif;
-}
-
-.quantity {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.quantity span {
-  font-size: 11px;
-  font-family: 'Montserrat', sans-serif;
-}
-
-
-
-.quantity input {
-  width: 95px;
-  text-align: center;
-  border: 1px solid #ccc;
-  height: 28px;
-  border-radius: 9px;
-  font-family: 'Montserrat', sans-serif;
-}
-
-</style>
-
-{%- comment -%}
-  Script de remoção automática específico para produtos únicos
-{%- endcomment -%}
-{% if cart.item_count == 1 %}
-  {% assign first_item = cart.items.first %}
-  {% if first_item.product.title == "Case de Couro" %}
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        let updates = {
-          // Substitua pelo ID correto do produto case-de-couro-brinde
-          // 10203738800406: 0
-        };
-
-        fetch(window.Shopify.routes.root + 'cart/update.js', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ updates })
-        })
-        .then(response => response.json())
-        .then(data => {
-          console.log("Itens removidos:", data);
-        })
-        .catch((error) => {
-          console.error('Error:', error);
-        });
-      });
-    </script>
-  {% endif %}
-{% endif %}
 
 {% schema %}
 {
@@ -684,785 +1825,4 @@
     }
   ]
 }
-{% endschema %}<cart-drawer
-  style="position: fixed; top: 0; right: 0; z-index: 9999; width: 90%;"
-  section="{{ section.id }}"
-  id="mini-cart"
-  class="mini-cart drawer drawer--large"
->
-  <span class="drawer__overlay"></span>
-
-  <header class="drawer__header">
-    <p class="drawer__title heading h6">
-      {%- case settings.cart_icon -%}
-        {%- when 'shopping_bag' -%}
-          {%- render 'icon' with 'header-cart' -%}
-
-        {%- when 'shopping_cart' -%}
-          {%- render 'icon' with 'header-shopping-cart' -%}
-
-        {%- when 'tote_bag' -%}
-          {%- render 'icon' with 'header-tote-bag' -%}
-      {%- endcase -%}
-
-      {%- if cart.item_count == 0 -%}
-        {{- 'cart.general.title' | t -}}
-      {%- else -%}
-        {{- 'cart.general.item_count' | t: count: cart.item_count -}}
-      {%- endif -%}
-    </p>
-
-    <button
-      type="button"
-      class="drawer__close-button tap-area"
-      data-action="close"
-      title="{{ 'general.accessibility.close' | t | escape }}"
-    >
-      {%- render 'icon' with 'close' -%}
-    </button>
-  </header>
-
-  {%- if cart.item_count == 0 -%}
-    <div class="drawer__content drawer__content--center">
-      <p>{{ 'cart.general.empty' | t }}</p>
-
-      <div class="button-wrapper">
-        <a href="{{ section.settings.empty_button_link }}" class="button button--primary">
-          {{- 'cart.general.start_shopping' | t -}}
-        </a>
-      </div>
-    </div>
-  {%- else -%}
-    <div class="drawer__content">
-      {%- if cart.item_count != 0 -%}
-        <div style="text-align:center; padding: 12px 3px;">
-          <span
-            ><img
-              style="width:22px; height:22px;"
-              src="https://cdn.shopify.com/s/files/1/0849/2253/2118/files/diff-icon-free-shipping_1.svg?v=1750097545"
-            >
-            Você ganhou frete grátis nesta compra.</span
-          >
-        </div>
-        {%- comment -%}
-          LÓGICA PRINCIPAL: Contagem de óculos (excluindo presentes, Clip-On e Boxes)
-          Esta contagem é usada para a oferta "Compre 1 Leve 2"
-        {%- endcomment -%}
-        {% assign num_glasses = 0 %}
-        {% assign tem_clip_on = false %}
-
-        {% for item in cart.items %}
-          {% if item.product.title contains 'Óculos' %}
-            {% unless item.product.tags contains 'gift' or item.product.tags contains 'Box' or item.product.title contains 'Clip-On' %}
-              {% assign num_glasses = num_glasses | plus: item.quantity %}
-            {% endunless %}
-          {% endif %}
-
-          {% if item.product.title contains 'Clip-On' %}
-            {% assign tem_clip_on = true %}
-          {% endif %}
-        {% endfor %}
-
-        {%- comment -%}
-          BARRAS DE PROGRESSO: Sistema de ofertas baseado na contagem
-        {%- endcomment -%}
-        {% if tem_clip_on %}
-          <div class="rc-upsell-bar">
-            <div class="rc-upsell-text">Você ganhou frete grátis no seu carrinho! 🖤</div>
-            <div class="rc-upsell-progress">
-              <div class="rc-upsell-fill" style="width: 100%;"></div>
-            </div>
-          </div>
-        {% elsif num_glasses >= 2 %}
-          <div class="rc-upsell-bar">
-            <div class="rc-upsell-text">Oferta ativada: 1 óculos <strong>100% grátis</strong> no seu carrinho! 🖤</div>
-            <div class="rc-upsell-progress">
-              <div class="rc-upsell-fill" style="width: 100%;"></div>
-            </div>
-            <span style="margin-top:8px;">2 de 2 óculos adicionados</span>
-          </div>
-        {% elsif num_glasses == 1 %}
-          <div class="rc-upsell-bar" data-location="top">
-            <div class="rc-upsell-text">COMPRE 1 LEVE 2: ADICIONE MAIS 1 ÓCULOS</div>
-            <div class="rc-upsell-progress">
-              <div class="rc-upsell-fill" style="width: 66%;"></div>
-            </div>
-            <span style="margin-top:8px;">1 de 2 óculos adicionado</span>
-          </div>
-        {% endif %}
-
-      {%- endif -%}
-
-      <!-- Definição das regras para presente grátis -->
-      {%- assign clip_items_for_gift = 0 -%}
-      {%- for clip_item in cart.items -%}
-        {%- assign clip_handle = clip_item.product.handle -%}
-        {%- assign clip_title = clip_item.product.title -%}
-        {%- if clip_handle contains 'clip' or clip_title contains 'Clip' -%}
-          {%- unless clip_item.product.tags contains 'gift' or clip_handle == 'case-de-couro-brinde' -%}
-            {%- assign clip_items_for_gift = clip_items_for_gift | plus: clip_item.quantity -%}
-          {%- endunless -%}
-        {%- endif -%}
-      {%- endfor -%}
-
-      {%- assign free_shipping_threshold = 1 -%}
-      {%- assign gift_threshold = 1 -%}
-      {%- assign has_gift = false -%}
-      {%- assign has_free_shipping = false -%}
-      {%- assign gift_items_to_remove = '' -%}
-      {%- assign progress_percentage = clip_items_for_gift | times: 100 | divided_by: gift_threshold -%}
-
-      {%- if progress_percentage > 100 -%}
-        {%- assign progress_percentage = 100 -%}
-      {%- endif -%}
-      
-      {%- if section.settings.enable_free_gift -%}
-        {%- assign has_gift = false -%}
-        {%- for line_item in cart.items -%}
-          {%- if line_item.product.tags contains 'gift' -%}
-            {%- if clip_items_for_gift < gift_threshold -%}
-              <script>
-                 document.addEventListener("DOMContentLoaded", function() {
-                  let attemptCount = 0; // Contador de tentativas
-                  const maxAttempts = 10; // Número máximo de tentativas
-                  const intervalTime = 500; // Intervalo entre tentativas em milissegundos (500 ms = 0,5 segundo)
-
-                  // Função para verificar o carrinho e remover o presente, se necessário
-                  function attemptToRemoveGift() {
-                    fetch("/cart.js")
-                      .then(response => response.json())
-                      .then(cart => {
-                        const removeGiftLink = document.getElementById("remove-gift-link");
-                        const clipItemsInCart = cart.items.reduce((total, cartItem) => {
-                          const handle = cartItem.handle || '';
-                          const title = cartItem.product_title || '';
-                          const isClipProduct = handle.includes('clip') || title.includes('Clip');
-                          const isGiftProduct = handle === 'case-de-couro-brinde';
-                          if (isClipProduct && !isGiftProduct) {
-                            return total + cartItem.quantity;
-                          }
-                          return total;
-                        }, 0);
-                        const giftThresholdClips = {{ gift_threshold }};
-
-                        if (clipItemsInCart < giftThresholdClips && removeGiftLink) {
-                          removeGiftLink.click(); // Clica automaticamente no link de remoção do presente
-                        }
-
-                        // Incrementa o contador de tentativas
-                        attemptCount++;
-
-                        // Para o intervalo se o item de presente foi removido ou se atingiu o número máximo de tentativas
-                        if (attemptCount >= maxAttempts || !document.getElementById("remove-gift-link")) {
-                          clearInterval(removalInterval); // Para o intervalo
-                        }
-                      });
-                  }
-
-                  // Configura o intervalo para executar a função a cada 500 ms
-                  const removalInterval = setInterval(attemptToRemoveGift, intervalTime);
-                });
-              </script>
-
-            {%- else -%}
-              {%- assign has_gift = true -%}
-            {%- endif -%}
-          {%- endif -%}
-        {%- endfor -%}
-
-        <!-- Mostrar o widget promocional apenas se não houver um presente no carrinho -->
-        {%- if section.settings.enable_free_gift and has_gift == false -%}
-          <!-- Definição das regras para widget promocional -->
-          {%- assign free_shipping_threshold = 1 -%}
-          {%- assign gift_threshold_widget = gift_threshold -%}
-          {%- assign num_clip_products = clip_items_for_gift -%}
-          {%- assign has_gift_widget = false -%}
-          {%- assign has_free_shipping = false -%}
-
-          <!-- Verifica itens no carrinho APENAS para o widget promocional -->
-          {%- for line_item in cart.items -%}
-            {%- if line_item.product.id == section.settings.produto_free_gift.id -%}
-              {%- assign has_gift_widget = true -%}
-            {%- endif -%}
-
-            {%- if line_item.product.title == 'Frete Grátis' -%}
-              {%- assign has_free_shipping = true -%}
-            {%- endif -%}
-          {%- endfor -%}
-
-          {%- assign remaining_clips = gift_threshold_widget | minus: num_clip_products -%}
-          {%- assign progress_percentage_widget = num_clip_products | times: 100 | divided_by: gift_threshold_widget -%}
-
-          {%- if progress_percentage_widget > 100 -%}
-            {%- assign progress_percentage_widget = 100 -%}
-          {%- endif -%}
-
-          <div class="icart-progress-bar-widget">
-            <div class="icart-pg-progress-container">
-              <!-- Incentivo para adicionar mais produtos Clip -->
-              {%- if num_clip_products >= gift_threshold_widget -%}
-                <p class="icart-message congrats" style="text-align:center;">Parabéns! Você ganhou um presente 🎁</p>
-              {%- else -%}
-                <p class="icart-message" style="text-align:center;">
-                  <strong>🎉 Aproveite, você ganhou Frete Grátis!</strong> <br>
-                </p>
-                <p class="icart-message">Adicione mais um óculos por <strong>apenas R$ 70</strong>.</p>
-              {%- endif -%}
-
-              <div class="icart-progressbar-layout">
-                <div class="icart-range-active" style="width: {{ progress_percentage_widget }}%;"></div>
-              </div>
-
-              {%- if num_clip_products >= gift_threshold_widget and has_gift_widget == false -%}
-                <div class="icart-product-details">
-                  <div class="icart-product-image">
-                    <a
-                      href="https://www.userosacoral.com/"
-                      class="icart-product-image"
-                    >
-                      <img
-                        src="{{ section.settings.produto_free_gift.featured_image | img_url: '100x100' }}"
-                        alt="{{ section.settings.produto_free_gift.title }}"
-                      >
-                    </a>
-                  </div>
-                  <div class="icart-product-info">
-                    <p class="icart-product-title">{{ section.settings.produto_free_gift.title }}</p>
-                    <p class="icart-product-threshold">Resgate agora para adicionar ao seu carrinho!</p>
-                    {%- render 'product-item-especial',
-                      product: section.settings.produto_free_gift,
-                      reduced_content: true,
-                      reduced_font_size: true,
-                      hide_secondary_image: true,
-                      sizes_attribute: '(max-width: 740px) 65px, 92px'
-                    -%}
-                  </div>
-                </div>
-
-              {% elsif num_clip_products < gift_threshold_widget %}
-                <div class="icart-product-details" style="display:none;">
-                  <div class="icart-product-image">
-                    <a
-                      href="https://www.userosacoral.com/products/pulseira-luxy-em-prata-925-com-zirconias-brilhantes"
-                      class="icart-product-image"
-                    >
-                      <img
-                        src="{{ section.settings.produto_free_gift.featured_image | img_url: '100x100' }}"
-                        alt="{{ section.settings.produto_free_gift.title }}"
-                      >
-                    </a>
-                  </div>
-                  <div class="icart-product-info">
-                    <p class="icart-product-title">{{ section.settings.produto_free_gift.title }}</p>
-                    <p class="icart-product-threshold">Um toque de elegância para complementar seu estilo.</p>
-                  </div>
-                </div>
-
-              {%- else -%}
-                <div class="icart-product-details">
-                  <div class="icart-product-image">
-                    <a
-                      href="https://www.userosacoral.com/products/pulseira-luxy-em-prata-925-com-zirconias-brilhantes"
-                      class="icart-product-image"
-                    >
-                      <img
-                        src="{{ section.settings.produto_free_gift.featured_image | img_url: '100x100' }}"
-                        alt="{{ section.settings.produto_free_gift.title }}"
-                      >
-                    </a>
-                  </div>
-                  <div class="icart-product-info">
-                    <p class="icart-product-title">{{ section.settings.produto_free_gift.title }}</p>
-                    <p class="icart-product-threshold">Um toque de elegância para complementar seu estilo.</p>
-                  </div>
-                </div>
-              {%- endif -%}
-            </div>
-          </div>
-
-        {%- else -%}
-          <!-- Mostrar mensagem e detalhes do brinde já resgatado -->
-        {%- endif -%}
-      {%- endif -%}
-
-      <style>
-        .titulo-frete {
-            color: #333; /* Texto escuro para contraste suave */
-            padding: 12px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 12px;
-            margin: 15px 0;
-        }
-
-        .titulo-frete .icart-message {
-            font-size: 14px;
-            font-weight: 500;
-            margin: 4px 0;
-        }
-
-        .titulo-frete .icart-message.congrats {
-            font-size: 11px;
-            font-weight: 500;
-            color: #1AA915; /* Verde escuro para sofisticação */
-            text-transform: uppercase;
-        }
-
-
-            .icart-progress-bar-widget {
-                background-color: #2B2B2B;
-                border-radius: 8px;
-                max-width: 360px; /* 20% menor */
-                margin: 20px auto;
-                padding: 16px; /* 20% menor */
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            }
-
-            .icart-pg-message-container {
-                text-align: center;
-                margin-bottom: 12px; /* 20% menor */
-            }
-
-            .icart-message {
-                font-size: 11px; /* 20% menor */
-                color: #FFF;
-                font-weight: 500;
-            }
-
-            .icart-message.congrats {
-                color: #FFF;
-                font-size: 12px; /* 20% menor */
-            }
-
-            .icart-product-details {
-                display: flex;
-                align-items: center;
-                margin: 12px 0; /* 20% menor */
-                background-color: #282828;
-                padding: 8px; /* 20% menor */
-                border-radius: 6px;
-            }
-
-            .icart-product-image img {
-                border-radius: 8px;
-                width: 60px; /* 20% menor */
-                height: 60px; /* 20% menor */
-                object-fit: cover;
-            }
-
-            .icart-product-info {
-                margin-left: 12px; /* 20% menor */
-                width: 200px;
-            }
-
-            .icart-product-title {
-                margin: 0;
-                color: #FFF;
-                font-size: 13px; /* 20% menor */
-                font-weight: bold;
-            }
-
-            .icart-product-threshold {
-                margin: 4px 0 0; /* 20% menor */
-                color: #CCC;
-                font-size: 10.5px; /* 20% menor */
-            }
-
-            .icart-progressbar-layout {
-                margin: 12px 0; /* 20% menor */
-                background-color: #4D4D4D;
-                height: 10px; /* 20% menor */
-                border-radius: 5px;
-                position: relative;
-                overflow: hidden;
-            }
-
-            .icart-range-active {
-                 background: linear-gradient(45deg, #AAAAAA 25%, #888888 25%, #888888 50%, #AAAAAA 50%, #AAAAAA 75%, #888888 75%);
-                background-size: 30px 30px;
-                height: 100%;
-                width: 100%;
-                transition: width 0.5s ease;
-                animation: slideStripes 3s linear infinite;
-            }
-
-            @keyframes slideStripes {
-                0% {
-                    background-position: 0 0;
-                }
-                100% {
-                    background-position: 30px 0;
-                }
-            }
-
-            .icart-special-offer-message {
-                text-align: center;
-                font-size: 11px; /* 20% menor */
-                color: #FFF;
-                margin-top: 8px; /* 20% menor */
-            }
-      </style>
-
-      <form id="mini-cart-form" action="{{ routes.cart_url }}" novalidate method="post">
-        <input type="hidden" name="checkout">
-
-        {%- for line_item in cart.items -%}
-          {%- if line_item.product.tags contains 'gift' and clip_items_for_gift < gift_threshold -%}
-            <script>
-                 document.addEventListener("DOMContentLoaded", function() {
-                const giftThresholdClips = {{ gift_threshold }};
-
-                // Função para verificar o carrinho e remover o presente, se necessário
-                function attemptToRemoveGift() {
-                  fetch("/cart.js")
-                    .then(response => response.json())
-                    .then(cart => {
-                      const removeGiftLink = document.getElementById("remove-gift-link");
-                      const clipItemsInCart = cart.items.reduce((total, cartItem) => {
-                        const handle = cartItem.handle || '';
-                        const title = cartItem.product_title || '';
-                        const isClipProduct = handle.includes('clip') || title.includes('Clip');
-                        const isGiftProduct = handle === 'case-de-couro-brinde';
-                        if (isClipProduct && !isGiftProduct) {
-                          return total + cartItem.quantity;
-                        }
-                        return total;
-                      }, 0);
-
-                      if (clipItemsInCart < giftThresholdClips && removeGiftLink) {
-                        removeGiftLink.click(); // Clica automaticamente no link de remoção do presente
-                      }
-                    });
-                }
-
-                // Configura o MutationObserver para monitorar o cart drawer
-                const cartDrawer = document.getElementById("mini-cart"); // Elemento do cart drawer
-                if (cartDrawer) {
-                  const observer = new MutationObserver((mutationsList) => {
-                    // Para cada mudança detectada, tente remover o presente
-                    for (let mutation of mutationsList) {
-                      if (mutation.type === "childList" || mutation.type === "attributes") {
-                        attemptToRemoveGift(); // Executa a verificação e remoção sempre que houver mudanças no cart drawer
-                      }
-                    }
-                  });
-
-                  // Configura o observer para observar mudanças no cart drawer
-                  observer.observe(cartDrawer, { attributes: true, childList: true, subtree: true });
-                }
-              });
-            </script>
-          {%- endif -%}
-
-          <line-item class="line-item">
-            <div class="line-item__content-wrapper">
-        {% if line_item.product.handle != "case-de-couro-brinde" %}
-              <a href="{{ line_item.url }}" class="line-item__image-wrapper" tabindex="-1" aria-hidden="true">
-                <span class="line-item__loader" hidden>
-                  <span class="line-item__loader-spinner spinner" hidden>
-                    {%- render 'icon' with 'spinner', width: 16, height: 16, stroke_width: 6 -%}
-                  </span>
-                  <span class="line-item__loader-mark" hidden>
-                    {%- render 'icon' with 'check', width: 20, height: 20 -%}
-                  </span>
-                </span>
-
-                <img
-                  class="line-item__image"
-                  loading="sizes"
-                  sizes="(max-width: 740px) 80px, 92px"
-                  {% render 'image-attributes', image: line_item.image, sizes: '80,92,160,184,240,276' %}
-                >
-              </a>
-            {% else %}
-               <a  class="line-item__image-wrapper" tabindex="-1" aria-hidden="true">
-                <span class="line-item__loader" hidden>
-                  <span class="line-item__loader-spinner spinner" hidden>
-                    {%- render 'icon' with 'spinner', width: 16, height: 16, stroke_width: 6 -%}
-                  </span>
-                  <span class="line-item__loader-mark" hidden>
-                    {%- render 'icon' with 'check', width: 20, height: 20 -%}
-                  </span>
-                </span>
-
-                <img
-                  class="line-item__image"
-                  loading="sizes"
-                  sizes="(max-width: 740px) 80px, 92px"
-                  {% render 'image-attributes', image: line_item.image, sizes: '80,92,160,184,240,276' %}
-                >
-              </a>
-            {% endif %}
-
-              {%- capture unit_price -%}
-                {%- if line_item.unit_price_measurement -%}
-                  <div class="price text--subdued">
-                    <div class="unit-price-measurement">
-                      <span class="unit-price-measurement__price">{{ line_item.unit_price | money }}</span>
-                      <span class="unit-price-measurement__separator">/</span>
-
-                      {%- if line_item.unit_price_measurement.reference_value != 1 -%}
-                        <span class="unit-price-measurement__reference-value">{{ line_item.unit_price_measurement.reference_value }}</span>
-                      {%- endif -%}
-
-                      <span class="unit-price-measurement__reference-unit">{{ line_item.unit_price_measurement.reference_unit }}</span>
-                    </div>
-                  </div>
-                {%- endif -%}
-              {%- endcapture -%}
-
-              {%- capture line_price -%}
-                {%- comment -%}
-                IMPLEMENTATION NOTE: The designer wanted to show the "compare at price" on cart. In case an automatic discount is applied
-                  to a line item though, the "real" discount takes precedence over the compare at price
-                {%- endcomment -%}
-
-                <span class="price {% if line_item.original_line_price > line_item.final_line_price or line_item.final_line_price == 0 or line_item.variant.compare_at_price > line_item.variant.price %}price--highlight{% endif %}">
-                  <span class="visually-hidden">{{ 'product.general.sale_price' | t }}</span>
-
-                  {%- if line_item.final_line_price == 0 -%}
-                  {%- else -%}
-                    {{- line_item.final_line_price | money -}}
-                  {%- endif -%}
-                </span>
-
-                {%- if line_item.original_line_price > line_item.final_line_price or line_item.variant.compare_at_price > line_item.variant.price -%}
-                  <span class="price price--compare">
-                    <span class="visually-hidden">{{ 'product.general.regular_price' | t }}</span>
-
-                    {%- if line_item.original_line_price > line_item.final_line_price -%}
-                      {{- line_item.original_line_price | money -}}
-                    {%- else -%}
-                      {{- line_item.variant.compare_at_price | times: line_item.quantity | money -}}
-                    {%- endif -%}
-                  </span>
-                {%- endif -%}
-              {%- endcapture -%}
-
-              <div class="line-item__info" style="width:100%;">
-                <div
-                  style="margin:0; display:flex; align-items:start; justify-content:center; flex-direction:column;"
-                  class="product-item-meta"
-                >
-                  {%- if settings.show_vendor -%}
-                    {%- assign vendor_handle = line_item.vendor | handle -%}
-                    {%- assign collection_for_vendor = collections[vendor_handle] -%}
-
-                    {%- unless collection_for_vendor.empty? -%}
-                      <a
-                        class="product-item-meta__vendor heading heading--xxsmall"
-                        href="{{ collection_for_vendor.url }}"
-                      >
-                        {{- line_item.vendor -}}
-                      </a>
-                    {%- else -%}
-                      <a
-                        class="product-item-meta__vendor heading heading--xxsmall"
-                        href="{{ line_item.vendor | url_for_vendor }}"
-                      >
-                        {{- line_item.vendor -}}
-                      </a>
-                    {%- endunless -%}
-                  {%- endif -%}
-     {% if line_item.product.handle != "case-de-couro-brinde" %}
-                  <a href="{{ line_item.url }}" style="margin:0;" class="product-item-meta__title text--small">
-                    {{- line_item.product.title -}}
-                  </a>
-                
-                      {% else %}
-                     <a  style="margin:0;" class="product-item-meta__title text--small">
-                    {{- line_item.product.title -}}
-                  </a>
-                      {% endif %}
-
-                  {%- capture line_item_properties -%}
-                    <div style="margin:0;" class="price-list price-list--stack">
-                  {{- line_price -}}
-                </div>
-
-                    {%- unless line_item.properties == blank -%}
-                      <ul class="product-item-meta__property list--unstyled text--subdued text--xsmall" role="list">
-                        {%- for property in line_item.properties -%}
-                          {%- assign first_character_in_key = property.first | truncate: 1, '' -%}
-
-                          {%- if property.last == blank or first_character_in_key == '_' -%}
-                            {%- continue -%}
-                          {%- endif -%}
-
-                          <li>{{ property.first }}: {{ property.last }}</li>
-                        {%- endfor -%}
-                      </ul>
-                    {%- endunless -%}
-                  {%- endcapture -%}
-
-                  {%- if line_item_properties != blank -%}
-                    <div style="margin:0px;" class="product-item-meta__property-list">
-                      {{- line_item_properties -}}
-                    </div>
-                  {%- endif -%}
-                  {%- if line_item.product.tags contains 'gift' -%}
-                  {% else %}
-                    <div class="product-item-meta__price-list-container text--small">
-                      {%- if unit_price != blank -%}
-                        <div class="price-list hidden-phone">
-                          {{- unit_price -}}
-                        </div>
-                      {%- endif -%}
-                    </div>
-                  {%- endif -%}
-                </div>
-
-                {%- if line_item.line_level_discount_allocations != blank -%}
-                  <ul
-                    style="margin-top:0px; margin-bottom:5px;"
-                    class="line-item__discount-list list--unstyled"
-                    role="list"
-                  >
-                    {%- for discount_allocation in line_item.line_level_discount_allocations -%}
-                      {%- for discount_allocation in line_item.line_level_discount_allocations -%}
-                        <li class="line-item__discount-badge discount-badge">
-                          {%- render 'icon' with 'discount-badge' -%}
-                          {{ discount_allocation.discount_application.title }}
-                        </li>
-                      {%- endfor -%}
-                    {%- endfor -%}
-                  </ul>
-                {%- endif -%}
-
-                {%- assign max_allowed_quantity = '' -%}
-                {%- assign allow_more = true -%}
-
-                {%- if line_item.variant.inventory_management == 'shopify'
-                  and line_item.variant.inventory_policy == 'deny'
-                  and line_item.variant.inventory_quantity <= line_item.quantity
-                -%}
-                  {%- assign max_allowed_quantity = line_item.variant.inventory_quantity -%}
-                  {%- assign allow_more = false -%}
-                {%- endif -%}
-
-                <line-item-quantity style="margin-top:0px; position:relative;" class="line-item__quantity">
-                  {%- if line_item.product.handle == 'case-de-couro-brinde' -%}
-                    <!-- Caso o produto tenha o handle 'case-de-couro-brinde', exibir apenas o botão de remover -->
-                    <a
-                      id="remove-gift-link"
-                      style="margin-left:0px; "
-                      href="{{ line_item.url_to_remove }}"
-                      class="line-item__remove-button link text--subdued text--xxsmall"
-                      data-no-instant
-                      >Remover Presente</a
-                    >
-                  {%- else -%}
-                  <!-- Exibir o seletor de quantidade padrão caso o produto não tenha o handle 'case-de-couro-brinde' -->
-                 
-                     {% if line_item.product.handle != "case-de-couro-brinde" %}
-                    <span>Qtd:</span>
-                    <div class="quantity-selector quantity-selector--small">
-                    
-                      <a
-                        href="{{ routes.cart_change_url }}?quantity={{ line_item.quantity | minus: 1 }}&line={{ forloop.index }}"
-                        class="quantity-selector__button"
-                        aria-label="{{ 'cart.general.decrease_quantity' | t | escape }}"
-                        data-no-instant
-                      >
-                        {%- render 'icon' with 'minus' -%}
-                      </a>
-
-                      <input
-                        is="input-number"
-                        class="quantity-selector__input text--xsmall"
-                        autocomplete="off"
-                        type="text"
-                        inputmode="numeric"
-                        name="updates[]"
-                        data-line="{{ forloop.index }}"
-                        value="{{ line_item.quantity }}"
-                        {% if max_allowed_quantity != '' %}
-                          max="{{ max_allowed_quantity }}"
-                        {% endif %}
-                        size="{{ line_item.quantity | append: '' | size | at_least: 2 }}"
-                        aria-label="{{ 'cart.general.change_quantity' | t | escape }}"
-                      >
-
-                      {%- if allow_more -%}
-                        <a
-                          href="{{ routes.cart_change_url }}?quantity={{ line_item.quantity | plus: 1 }}&line={{ forloop.index }}"
-                          class="quantity-selector__button"
-                          aria-label="{{ 'cart.general.increase_quantity' | t | escape }}"
-                          data-no-instant
-                        >
-                          {%- render 'icon' with 'plus' -%}
-                        </a>
-                      {%- else -%}
-                        <span
-                          class="quantity-selector__button"
-                          aria-label="{{ 'cart.general.no_more_stock' | t | escape }}"
-                          data-tooltip="{{ 'cart.general.no_more_stock' | t | escape }}"
-                        >
-                          {%- render 'icon' with 'plus' -%}
-                        </span>
-                      {%- endif -%}
-                    </div>
-                  {% else %}
-                     <span>Qtd:</span>
-                    <div class="quantity-selector quantity-selector--small">
-
-                      <input
-                        is="input-number"
-                        class="quantity-selector__input text--xsmall"
-                        autocomplete="off"
-                        type="text"
-                        inputmode="numeric"
-                        name="updates[]"
-                        data-line="{{ forloop.index }}"
-                        value="{{ line_item.quantity }}"
-                        {% if max_allowed_quantity != '' %}
-                          max="{{ max_allowed_quantity }}"
-                        {% endif %}
-                        size="{{ line_item.quantity | append: '' | size | at_least: 2 }}"
-                        aria-label="{{ 'cart.general.change_quantity' | t | escape }}"
-                        readonly
-                      >
-                    
-                    </div>
-                       {% endif %}
-
-
-                    <a
-                      href="{{ line_item.url_to_remove }}"
-                      data-no-instant
-                      style="position:absolute; left:95%;"
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 32 32"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <defs>
-                          <style>.cls-1{fill:none;}</style>
-                        </defs>
-                        <title/>
-                        <g data-name="Layer 2" id="Layer_2">
-                          <path d="M20,29H12a5,5,0,0,1-5-5V12a1,1,0,0,1,2,0V24a3,3,0,0,0,3,3h8a3,3,0,0,0,3-3V12a1,1,0,0,1,2,0V24A5,5,0,0,1,20,29Z"/>
-                          <path d="M26,9H6A1,1,0,0,1,6,7H26a1,1,0,0,1,0,2Z"/>
-                          <path d="M20,9H12a1,1,0,0,1-1-1V6a3,3,0,0,1,3-3h4a3,3,0,0,1,3,3V8A1,1,0,0,1,20,9ZM13,7h6V6a1,1,0,0,0-1-1H14a1,1,0,0,0-1,1Z"/>
-                          <path d="M14,23a1,1,0,0,1-1-1V15a1,1,0,0,1,2,0v7A1,1,0,0,1,14,23Z"/>
-                          <path d="M18,23a1,1,0,0,1-1-1V15a1,1,0,0,1,2,0v7A1,1,0,0,1,18,23Z"/>
-                        </g>
-                        <g id="frame">
-                          <rect class="cls-1" height="2" width="2"/>
-                        </g>
-                      </svg>
-                    </a>
-                  {%- endif -%}
-                </line-item-quantity>
-                
-
-              </div>
-            </div>
-          </line-item>
-        {%- endfor -%}
-        {%- if gift_items_to_remove != '' -%}
-          <meta http-equiv="refresh" content="0;url=/cart?{{ gift_items_to_remove | remove_first: '&' }}">
-        {%- endif -%}
-      </form>
+{% endschema %}
