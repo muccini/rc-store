@@ -595,7 +595,7 @@
     <script>
       document.addEventListener("DOMContentLoaded", function() {
         let updates = {
-          // Substitua pelo ID correto do produto case-couro-brinde
+          // Substitua pelo ID correto do produto case-de-couro-brinde
           // 10203738800406: 0
         };
 
@@ -794,23 +794,23 @@
       {%- endif -%}
 
       <!-- Definição das regras para presente grátis -->
+      {%- assign clip_items_for_gift = 0 -%}
+      {%- for clip_item in cart.items -%}
+        {%- assign clip_handle = clip_item.product.handle -%}
+        {%- assign clip_title = clip_item.product.title -%}
+        {%- if clip_handle contains 'clip' or clip_title contains 'Clip' -%}
+          {%- unless clip_item.product.tags contains 'gift' or clip_handle == 'case-de-couro-brinde' -%}
+            {%- assign clip_items_for_gift = clip_items_for_gift | plus: clip_item.quantity -%}
+          {%- endunless -%}
+        {%- endif -%}
+      {%- endfor -%}
+
       {%- assign free_shipping_threshold = 1 -%}
-      {%- assign gift_threshold = 3 -%}
+      {%- assign gift_threshold = 1 -%}
       {%- assign has_gift = false -%}
       {%- assign has_free_shipping = false -%}
-
-      {%- if progress_percentage > 100 -%}
-        {%- assign progress_percentage = 100 -%}
-      {%- endif -%}
-
-      {%- assign gift_threshold = 1 -%}
-      {%- assign cart_total = cart.total_price | default: 0 -%}
-      {%- assign progress_percentage = cart_total | divided_by: gift_threshold | times: 100 -%}
       {%- assign gift_items_to_remove = '' -%}
-
-      {%- if progress_percentage < 90 -%}
-        {%- assign progress_percentage = 90 -%}
-      {%- endif -%}
+      {%- assign progress_percentage = clip_items_for_gift | times: 100 | divided_by: gift_threshold -%}
 
       {%- if progress_percentage > 100 -%}
         {%- assign progress_percentage = 100 -%}
@@ -820,10 +820,9 @@
         {%- assign has_gift = false -%}
         {%- for line_item in cart.items -%}
           {%- if line_item.product.tags contains 'gift' -%}
-            {%- if cart_total < gift_threshold -%}
+            {%- if clip_items_for_gift < gift_threshold -%}
               <script>
                  document.addEventListener("DOMContentLoaded", function() {
-                  const giftThreshold = 17000; // Valor mínimo em centavos para manter o presente
                   let attemptCount = 0; // Contador de tentativas
                   const maxAttempts = 10; // Número máximo de tentativas
                   const intervalTime = 500; // Intervalo entre tentativas em milissegundos (500 ms = 0,5 segundo)
@@ -833,12 +832,20 @@
                     fetch("/cart.js")
                       .then(response => response.json())
                       .then(cart => {
-                        const cartTotal = cart.total_price;
-
-                        // Verifica se o total do carrinho está abaixo do limite e se o link de remoção está presente
                         const removeGiftLink = document.getElementById("remove-gift-link");
+                        const clipItemsInCart = cart.items.reduce((total, cartItem) => {
+                          const handle = cartItem.handle || '';
+                          const title = cartItem.product_title || '';
+                          const isClipProduct = handle.includes('clip') || title.includes('Clip');
+                          const isGiftProduct = handle === 'case-de-couro-brinde';
+                          if (isClipProduct && !isGiftProduct) {
+                            return total + cartItem.quantity;
+                          }
+                          return total;
+                        }, 0);
+                        const giftThresholdClips = {{ gift_threshold }};
 
-                        if (cartTotal < giftThreshold && removeGiftLink) {
+                        if (clipItemsInCart < giftThresholdClips && removeGiftLink) {
                           removeGiftLink.click(); // Clica automaticamente no link de remoção do presente
                         }
 
@@ -867,17 +874,13 @@
         {%- if section.settings.enable_free_gift and has_gift == false -%}
           <!-- Definição das regras para widget promocional -->
           {%- assign free_shipping_threshold = 1 -%}
-          {%- assign gift_threshold_widget = 1 -%}
-          {%- assign num_clip_products = 0 -%}
+          {%- assign gift_threshold_widget = gift_threshold -%}
+          {%- assign num_clip_products = clip_items_for_gift -%}
           {%- assign has_gift_widget = false -%}
           {%- assign has_free_shipping = false -%}
 
           <!-- Verifica itens no carrinho APENAS para o widget promocional -->
           {%- for line_item in cart.items -%}
-            {%- if line_item.product.title contains 'Clip' -%}
-              {%- assign num_clip_products = num_clip_products | plus: line_item.quantity -%}
-            {%- endif -%}
-
             {%- if line_item.product.id == section.settings.produto_free_gift.id -%}
               {%- assign has_gift_widget = true -%}
             {%- endif -%}
@@ -897,13 +900,13 @@
           <div class="icart-progress-bar-widget">
             <div class="icart-pg-progress-container">
               <!-- Incentivo para adicionar mais produtos Clip -->
-              {%- if num_clip_products < 0 -%}
+              {%- if num_clip_products >= gift_threshold_widget -%}
+                <p class="icart-message congrats" style="text-align:center;">Parabéns! Você ganhou um presente 🎁</p>
+              {%- else -%}
                 <p class="icart-message" style="text-align:center;">
                   <strong>🎉 Aproveite, você ganhou Frete Grátis!</strong> <br>
                 </p>
                 <p class="icart-message">Adicione mais um óculos por <strong>apenas R$ 70</strong>.</p>
-              {%- else -%}
-                <p class="icart-message congrats" style="text-align:center;">Parabéns! Você ganhou um presente 🎁</p>
               {%- endif -%}
 
               <div class="icart-progressbar-layout">
@@ -936,7 +939,7 @@
                   </div>
                 </div>
 
-              {% elsif num_clip_products < 2 %}
+              {% elsif num_clip_products < gift_threshold_widget %}
                 <div class="icart-product-details" style="display:none;">
                   <div class="icart-product-image">
                     <a
@@ -1104,22 +1107,29 @@
         <input type="hidden" name="checkout">
 
         {%- for line_item in cart.items -%}
-          {%- if line_item.product.tags contains 'gift' and cart_total < gift_threshold -%}
+          {%- if line_item.product.tags contains 'gift' and clip_items_for_gift < gift_threshold -%}
             <script>
                  document.addEventListener("DOMContentLoaded", function() {
-                const giftThreshold = 19700; // Valor mínimo em centavos para manter o presente
+                const giftThresholdClips = {{ gift_threshold }};
 
                 // Função para verificar o carrinho e remover o presente, se necessário
                 function attemptToRemoveGift() {
                   fetch("/cart.js")
                     .then(response => response.json())
                     .then(cart => {
-                      const cartTotal = cart.total_price;
-
-                      // Verifica se o total do carrinho está abaixo do limite e se o link de remoção está presente
                       const removeGiftLink = document.getElementById("remove-gift-link");
+                      const clipItemsInCart = cart.items.reduce((total, cartItem) => {
+                        const handle = cartItem.handle || '';
+                        const title = cartItem.product_title || '';
+                        const isClipProduct = handle.includes('clip') || title.includes('Clip');
+                        const isGiftProduct = handle === 'case-de-couro-brinde';
+                        if (isClipProduct && !isGiftProduct) {
+                          return total + cartItem.quantity;
+                        }
+                        return total;
+                      }, 0);
 
-                      if (cartTotal < giftThreshold && removeGiftLink) {
+                      if (clipItemsInCart < giftThresholdClips && removeGiftLink) {
                         removeGiftLink.click(); // Clica automaticamente no link de remoção do presente
                       }
                     });
@@ -1146,7 +1156,7 @@
 
           <line-item class="line-item">
             <div class="line-item__content-wrapper">
-        {% if line_item.product.handle != "case-couro-brinde" %}
+        {% if line_item.product.handle != "case-de-couro-brinde" %}
               <a href="{{ line_item.url }}" class="line-item__image-wrapper" tabindex="-1" aria-hidden="true">
                 <span class="line-item__loader" hidden>
                   <span class="line-item__loader-spinner spinner" hidden>
@@ -1254,7 +1264,7 @@
                       </a>
                     {%- endunless -%}
                   {%- endif -%}
-     {% if line_item.product.handle != "case-couro-brinde" %}
+     {% if line_item.product.handle != "case-de-couro-brinde" %}
                   <a href="{{ line_item.url }}" style="margin:0;" class="product-item-meta__title text--small">
                     {{- line_item.product.title -}}
                   </a>
@@ -1331,8 +1341,8 @@
                 {%- endif -%}
 
                 <line-item-quantity style="margin-top:0px; position:relative;" class="line-item__quantity">
-                  {%- if line_item.product.handle == 'case-couro-brinde' -%}
-                    <!-- Caso o produto tenha o handle 'case-couro-brinde', exibir apenas o botão de remover -->
+                  {%- if line_item.product.handle == 'case-de-couro-brinde' -%}
+                    <!-- Caso o produto tenha o handle 'case-de-couro-brinde', exibir apenas o botão de remover -->
                     <a
                       id="remove-gift-link"
                       style="margin-left:0px; "
@@ -1342,9 +1352,9 @@
                       >Remover Presente</a
                     >
                   {%- else -%}
-                    <!-- Exibir o seletor de quantidade padrão caso o produto não tenha o handle 'case-couro-brinde' -->
+                  <!-- Exibir o seletor de quantidade padrão caso o produto não tenha o handle 'case-de-couro-brinde' -->
                  
-                     {% if line_item.product.handle != "case-couro-brinde" %}
+                     {% if line_item.product.handle != "case-de-couro-brinde" %}
                     <span>Qtd:</span>
                     <div class="quantity-selector quantity-selector--small">
                     
